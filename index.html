@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Huéspedes - Apartaestudios</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        },
+                        booking: '#003580',
+                        airbnb: '#FF5A5F',
+                        direct: '#10B981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-brand-500 rounded-xl text-white shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-building-user text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">Control de Huéspedes</h1>
+                    <p class="text-xs text-slate-400">Apartaestudios Amoblados</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="openModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm hover:shadow-md">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nuevo Registro</span>
+                </button>
+                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-2 rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm" title="Descargar Excel/CSV">
+                    <i class="fa-solid fa-file-excel"></i>
+                    <span class="hidden md:inline">Exportar Excel</span>
+                </button>
+                <button onclick="loadDemoData()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition-all" title="Cargar datos de prueba">
+                    <i class="fa-solid fa-database mr-1"></i> Demo
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- KPI Metrics Dashboard -->
+        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <!-- Metric 1: Total Noches -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                    <span>Noches Totales</span>
+                    <i class="fa-solid fa-moon text-indigo-500"></i>
+                </div>
+                <div id="kpi-nights" class="text-2xl font-extrabold text-slate-800">0</div>
+                <div id="kpi-reservations" class="text-xs text-slate-500 mt-1">0 reservas</div>
+            </div>
+
+            <!-- Metric 2: Cobro Bruto -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                    <span>Cobro Total</span>
+                    <i class="fa-solid fa-hand-holding-dollar text-emerald-500"></i>
+                </div>
+                <div id="kpi-gross" class="text-2xl font-extrabold text-slate-800">$0</div>
+                <div class="text-xs text-slate-500 mt-1">Monto gastado clientes</div>
+            </div>
+
+            <!-- Metric 3: Comisiones Booking -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                    <span>Comisión Booking</span>
+                    <i class="fa-solid fa-percent text-blue-600"></i>
+                </div>
+                <div id="kpi-commission" class="text-2xl font-extrabold text-rose-600">$0</div>
+                <div class="text-xs text-slate-500 mt-1">Gastos de plataforma</div>
+            </div>
+
+            <!-- Metric 4: Gastos de Aseo -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                    <span>Gastos Aseo</span>
+                    <i class="fa-solid fa-broom text-amber-500"></i>
+                </div>
+                <div id="kpi-cleaning" class="text-2xl font-extrabold text-amber-600">$0</div>
+                <div id="kpi-cleaning-status" class="text-xs text-slate-500 mt-1">Pagados a personal</div>
+            </div>
+
+            <!-- Metric 5: Ingreso Neto -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
+                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                    <span>Ingreso Neto Real</span>
+                    <i class="fa-solid fa-wallet text-brand-600"></i>
+                </div>
+                <div id="kpi-net" class="text-2xl font-extrabold text-brand-600">$0</div>
+                <div class="text-xs text-slate-500 mt-1">Ganancia limpia</div>
+            </div>
+        </section>
+
+        <!-- Filters Toolbar -->
+        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <!-- Search input -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </span>
+                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Buscar cliente, cédula..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                </div>
+
+                <!-- Platform Filter -->
+                <div>
+                    <select id="filter-channel" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
+                        <option value="ALL">Todas las plataformas (Canal)</option>
+                        <option value="Booking">Booking.com</option>
+                        <option value="Airbnb">Airbnb</option>
+                        <option value="Cliente Fidelizado">Cliente Fidelizado (Directo)</option>
+                    </select>
+                </div>
+
+                <!-- Apartment Filter -->
+                <div>
+                    <select id="filter-apartment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
+                        <option value="ALL">Todos los apartaestudios</option>
+                        <!-- Dynamic options loaded via JS -->
+                    </select>
+                </div>
+
+                <!-- Month Filter -->
+                <div>
+                    <select id="filter-month" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
+                        <option value="ALL">Todos los meses</option>
+                        <option value="01">Enero</option>
+                        <option value="02">Febrero</option>
+                        <option value="03">Marzo</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Mayo</option>
+                        <option value="06">Junio</option>
+                        <option value="07">Julio</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+
+                <!-- Unpaid / Payment Status Filter -->
+                <div>
+                    <select id="filter-payment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
+                        <option value="ALL">Todos los estados de pago</option>
+                        <option value="Pendiente" class="text-rose-600 font-bold">⚠️ Pendientes de pago</option>
+                        <option value="Pagado" class="text-emerald-600 font-bold">✅ Pagados</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-3 flex justify-end">
+                <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-4 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                    <span>Limpiar Filtros</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Data Table Container -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <h2 class="font-bold text-slate-800">Listado de Huéspedes Registrados</h2>
+                    <span id="record-count-badge" class="bg-brand-100 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">0 registros</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/80 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-4">Cliente / Cédula</th>
+                            <th class="py-3 px-4">Estado Pago</th>
+                            <th class="py-3 px-4">Apto</th>
+                            <th class="py-3 px-4">Fechas (Ingreso / Salida)</th>
+                            <th class="py-3 px-4 text-center">Noches</th>
+                            <th class="py-3 px-4">Canal</th>
+                            <th class="py-3 px-4 text-right">Valor Noche / Total</th>
+                            <th class="py-3 px-4 text-right">Comisión Booking</th>
+                            <th class="py-3 px-4 text-right">Aseo (Valor & Fecha)</th>
+                            <th class="py-3 px-4 text-right">Neto Aprox.</th>
+                            <th class="py-3 px-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guests-table-body" class="divide-y divide-slate-200">
+                        <!-- Rows rendered dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden p-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                    <i class="fa-solid fa-folder-open text-2xl"></i>
+                </div>
+                <h3 class="text-slate-700 font-semibold mb-1">No hay huéspedes registrados</h3>
+                <p class="text-slate-500 text-xs max-w-sm mx-auto mb-4">Haz clic en "Nuevo Registro" para empezar a llevar el control de tus apartaestudios o carga los datos de demostración.</p>
+                <button onclick="openModal()" class="bg-brand-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-brand-600 inline-flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Registrar Primer Huésped
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Form for Adding/Editing Guest -->
+    <div id="modal-guest" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
+            
+            <!-- Modal Header -->
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center rounded-t-2xl">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-brand-400"></i>
+                    <h3 id="modal-title" class="font-bold text-base">Registrar Nuevo Huésped</h3>
+                </div>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition-all">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="form-guest" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="guest-id">
+
+                <!-- Sección: Datos del Cliente -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-id-card text-brand-500"></i> Información del Cliente
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Nombre Completo del Cliente *</label>
+                            <input type="text" id="client-name" required placeholder="Ej: Juan Carlos Pérez" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Nº Cédula / Documento *</label>
+                            <input type="text" id="client-id" required placeholder="Ej: 1020304050" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Hospedaje & Fechas -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-door-open text-brand-500"></i> Detalles de la Estancia
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Apartaestudio *</label>
+                            <input type="text" id="apartment-number" required placeholder="Ej: Apt 101, Apt 202" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Ingreso *</label>
+                            <input type="date" id="check-in-date" required onchange="calculateNights()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Salida *</label>
+                            <input type="date" id="check-out-date" required onchange="calculateNights()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Visual banner for automatic nights calculation -->
+                    <div class="bg-brand-50 border border-brand-200 p-3 rounded-lg flex justify-between items-center">
+                        <div class="flex items-center gap-2 text-brand-700 text-xs font-medium">
+                            <i class="fa-solid fa-circle-info text-brand-500"></i>
+                            <span>Noches calculadas automáticamente (excluye día de salida):</span>
+                        </div>
+                        <span id="calculated-nights-badge" class="font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200">0 Noches</span>
+                    </div>
+                </div>
+
+                <!-- Sección: Canal y Comisiones -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-brand-500"></i> Canal, Pago & Valores Financieros
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Plataforma / Canal *</label>
+                            <select id="channel-type" onchange="toggleCommissionField()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <option value="Booking">Booking.com</option>
+                                <option value="Airbnb">Airbnb</option>
+                                <option value="Cliente Fidelizado">Cliente Fidelizado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Estado del Pago del Hospedaje *</label>
+                            <select id="payment-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-medium">
+                                <option value="Pagado">✅ Pagado</option>
+                                <option value="Pendiente">⚠️ Pendiente de Pago</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Valor Total Cobrado ($) *</label>
+                            <input type="number" id="total-price" min="0" step="any" required placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">
+                                Comisión Booking ($) 
+                                <span id="commission-label-info" class="text-[10px] text-slate-400">(Booking)</span>
+                            </label>
+                            <input type="number" id="booking-commission" min="0" step="any" placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección: Control de Aseo (Opcional al ingreso) -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-broom text-brand-500"></i> Registro de Aseo
+                        </h4>
+                        <span class="text-[11px] text-slate-500 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium">
+                            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>Opcional al ingresar. Se puede completar al salir.
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Valor del Aseo ($) <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                            <input type="number" id="cleaning-fee" min="0" step="any" placeholder="Ej: 40000 (Dejar en blanco si se define al salir)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Pago del Aseo <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                            <input type="date" id="cleaning-payment-date" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Guardar Huésped</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800 mb-1">¿Eliminar este registro?</h3>
+            <p class="text-xs text-slate-500 mb-6">Esta acción no se puede deshacer y el registro del huésped será borrado permanentemente.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-delete" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 shadow-sm">
+                    Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-all transform translate-y-20 opacity-0 z-50">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message" class="text-xs font-medium">Operación realizada con éxito</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let guests = [];
+        let deleteTargetId = null;
+
+        // Sample initial data generator
+        function getInitialDemoData() {
+            const today = new Date();
+            const formatDate = (dateObj) => dateObj.toISOString().split('T')[0];
+
+            const d1 = new Date(today); d1.setDate(today.getDate() - 10);
+            const d1_out = new Date(d1); d1_out.setDate(d1.getDate() + 4);
+
+            const d2 = new Date(today); d2.setDate(today.getDate() - 4);
+            const d2_out = new Date(d2); d2_out.setDate(d2.getDate() + 3);
+
+            const d3 = new Date(today); d3.setDate(today.getDate() + 1);
+            const d3_out = new Date(d3); d3_out.setDate(d3.getDate() + 5);
+
+            return [
+                {
+                    id: 'g-101',
+                    clientName: 'María Fernanda Gómez',
+                    clientId: '1098765432',
+                    apartment: 'Apto 101',
+                    checkIn: formatDate(d1),
+                    checkOut: formatDate(d1_out),
+                    nights: 4,
+                    channel: 'Booking',
+                    paymentStatus: 'Pagado',
+                    totalPrice: 480000,
+                    bookingCommission: 72000,
+                    cleaningFee: 40000,
+                    cleaningDate: formatDate(d1_out)
+                },
+                {
+                    id: 'g-102',
+                    clientName: 'Alejandro Restrepo',
+                    clientId: '80123456',
+                    apartment: 'Apto 202',
+                    checkIn: formatDate(d2),
+                    checkOut: formatDate(d2_out),
+                    nights: 3,
+                    channel: 'Airbnb',
+                    paymentStatus: 'Pendiente',
+                    totalPrice: 390000,
+                    bookingCommission: 0,
+                    cleaningFee: 0,
+                    cleaningDate: ''
+                },
+                {
+                    id: 'g-103',
+                    clientName: 'Carlos Eduardo Silva',
+                    clientId: '79888999',
+                    apartment: 'Apto 101',
+                    checkIn: formatDate(d3),
+                    checkOut: formatDate(d3_out),
+                    nights: 4,
+                    channel: 'Cliente Fidelizado',
+                    paymentStatus: 'Pagado',
+                    totalPrice: 400000,
+                    bookingCommission: 0,
+                    cleaningFee: 40000,
+                    cleaningDate: formatDate(d3)
+                }
+            ];
+        }
+
+        // Date difference calculation logic (Checkout date is excluded)
+        function calculateNightsBetween(startDateStr, endDateStr) {
+            if (!startDateStr || !endDateStr) return 0;
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+            
+            const diffTime = end.getTime() - start.getTime();
+            if (isNaN(diffTime) || diffTime <= 0) return 0;
+            
+            return Math.ceil(diffTime / (1000 * 3600 * 24));
+        }
+
+        // Live handler in modal form
+        function calculateNights() {
+            const inDate = document.getElementById('check-in-date').value;
+            const outDate = document.getElementById('check-out-date').value;
+            const badge = document.getElementById('calculated-nights-badge');
+            
+            const nights = calculateNightsBetween(inDate, outDate);
+            badge.innerText = `${nights} ${nights === 1 ? 'Noche' : 'Noches'}`;
+            
+            if (nights <= 0 && inDate && outDate) {
+                badge.className = "font-bold text-rose-600 text-sm bg-rose-50 px-2.5 py-1 rounded border border-rose-200";
+                badge.innerText = "Error: Fecha de salida inválida";
+            } else {
+                badge.className = "font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200";
+            }
+        }
+
+        // Toggle Booking commission input based on platform
+        function toggleCommissionField() {
+            const channel = document.getElementById('channel-type').value;
+            const commInput = document.getElementById('booking-commission');
+            const labelInfo = document.getElementById('commission-label-info');
+
+            if (channel === 'Booking') {
+                commInput.disabled = false;
+                commInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
+                labelInfo.innerText = "(Obligatorio/Manual)";
+                labelInfo.className = "text-[10px] text-brand-600 font-semibold";
+            } else {
+                commInput.value = 0;
+                commInput.disabled = true;
+                commInput.classList.add('bg-slate-100', 'cursor-not-allowed');
+                if (channel === 'Airbnb') {
+                    labelInfo.innerText = "(Airbnb la descuenta automáticamente)";
+                } else {
+                    labelInfo.innerText = "(Sin comisión - Cliente Directo)";
+                }
+                labelInfo.className = "text-[10px] text-slate-400";
+            }
+        }
+
+        // Currency Formatter
+        function formatCOP(amount) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+            }).format(amount || 0);
+        }
+
+        function renderUI(dataToRender = guests) {
+            const tableBody = document.getElementById('guests-table-body');
+            const emptyState = document.getElementById('empty-state');
+            const countBadge = document.getElementById('record-count-badge');
+
+            tableBody.innerHTML = '';
+            countBadge.innerText = `${dataToRender.length} ${dataToRender.length === 1 ? 'registro' : 'registros'}`;
+
+            if (dataToRender.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+
+                dataToRender.forEach(g => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-slate-700";
+
+                    // Channel badge style
+                    let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                    let iconClass = "fa-solid fa-handshake";
+                    if (g.channel === 'Booking') {
+                        badgeClass = "bg-blue-100 text-blue-800 border-blue-200";
+                        iconClass = "fa-solid fa-b";
+                    } else if (g.channel === 'Airbnb') {
+                        badgeClass = "bg-rose-100 text-rose-800 border-rose-200";
+                        iconClass = "fa-solid fa-house-chimney-window";
+                    }
+
+                    // Payment status badge
+                    const isPaid = (g.paymentStatus || 'Pagado') === 'Pagado';
+                    const paymentBadge = isPaid
+                        ? `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-circle-check text-xs"></i> Pagado</span>`
+                        : `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[11px] animate-pulse"><i class="fa-solid fa-clock text-xs"></i> Pendiente</span>`;
+
+                    // Cleaning cell rendering (handles empty/unpaid cleaning fee)
+                    const cleaningVal = parseFloat(g.cleaningFee) || 0;
+                    const cleaningCell = cleaningVal > 0 
+                        ? `<div class="text-amber-700 font-semibold">-${formatCOP(cleaningVal)}</div>
+                           <div class="text-[11px] text-slate-400">Pago: ${g.cleaningDate || 'S.D.'}</div>`
+                        : `<span class="inline-block bg-slate-100 text-slate-500 text-[11px] px-2 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
+
+                    // Calculate net approx for row
+                    const netApprox = (g.totalPrice || 0) - (g.bookingCommission || 0) - cleaningVal;
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 font-medium">
+                            <div class="text-slate-900 font-semibold">${escapeHTML(g.clientName)}</div>
+                            <div class="text-xs text-slate-400 font-mono">C.C: ${escapeHTML(g.clientId)}</div>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            ${paymentBadge}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="bg-slate-100 text-slate-800 font-medium px-2.5 py-1 rounded-md text-xs border border-slate-200">
+                                ${escapeHTML(g.apartment)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap text-xs">
+                            <div class="text-emerald-700 font-medium"><i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> ${g.checkIn}</div>
+                            <div class="text-rose-600 font-medium"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> ${g.checkOut}</div>
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold text-slate-800 whitespace-nowrap">
+                            <span class="inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs">
+                                ${g.nights} ${g.nights === 1 ? 'Noche' : 'Noches'}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeClass}">
+                                <i class="${iconClass} text-[10px]"></i> ${g.channel}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right font-semibold text-slate-800 whitespace-nowrap">
+                            ${formatCOP(g.totalPrice)}
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                            ${g.bookingCommission > 0 ? `<span class="text-rose-600 font-medium">-${formatCOP(g.bookingCommission)}</span>` : `<span class="text-slate-300">$0</span>`}
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap text-xs">
+                            ${cleaningCell}
+                        </td>
+                        <td class="py-3 px-4 text-right font-bold text-brand-700 whitespace-nowrap">
+                            ${formatCOP(netApprox)}
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="editGuest('${g.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Editar">
+                                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                </button>
+                                <button onclick="confirmDelete('${g.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Eliminar">
+                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            updateKPIs(dataToRender);
+            updateApartmentDropdownOptions();
+        }
+
+        // Calculate and display dashboard KPIs
+        function updateKPIs(dataset = guests) {
+            let totalNights = 0;
+            let totalGross = 0;
+            let totalCommission = 0;
+            let totalCleaning = 0;
+
+            dataset.forEach(g => {
+                totalNights += (parseInt(g.nights) || 0);
+                totalGross += (parseFloat(g.totalPrice) || 0);
+                totalCommission += (parseFloat(g.bookingCommission) || 0);
+                totalCleaning += (parseFloat(g.cleaningFee) || 0);
+            });
+
+            const totalNet = totalGross - totalCommission - totalCleaning;
+
+            document.getElementById('kpi-nights').innerText = totalNights;
+            document.getElementById('kpi-reservations').innerText = `${dataset.length} ${dataset.length === 1 ? 'estancia' : 'estancias'}`;
+            document.getElementById('kpi-gross').innerText = formatCOP(totalGross);
+            document.getElementById('kpi-commission').innerText = formatCOP(totalCommission);
+            document.getElementById('kpi-cleaning').innerText = formatCOP(totalCleaning);
+            document.getElementById('kpi-net').innerText = formatCOP(totalNet);
+        }
+
+        function updateApartmentDropdownOptions() {
+            const select = document.getElementById('filter-apartment');
+            const currentValue = select.value;
+            
+            const apartments = Array.from(new Set(guests.map(g => g.apartment.trim()))).sort();
+
+            select.innerHTML = '<option value="ALL">Todos los apartaestudios</option>';
+            apartments.forEach(apt => {
+                const opt = document.createElement('option');
+                opt.value = apt;
+                opt.innerText = apt;
+                select.appendChild(opt);
+            });
+
+            select.value = currentValue;
+        }
+
+        function openModal(editId = null) {
+            const form = document.getElementById('form-guest');
+            form.reset();
+            document.getElementById('guest-id').value = '';
+            document.getElementById('modal-title').innerText = 'Registrar Nuevo Huésped';
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            document.getElementById('check-in-date').value = todayStr;
+            document.getElementById('cleaning-payment-date').value = '';
+            document.getElementById('payment-status').value = 'Pagado';
+
+            toggleCommissionField();
+
+            if (editId) {
+                const item = guests.find(g => g.id === editId);
+                if (item) {
+                    document.getElementById('guest-id').value = item.id;
+                    document.getElementById('client-name').value = item.clientName;
+                    document.getElementById('client-id').value = item.clientId;
+                    document.getElementById('apartment-number').value = item.apartment;
+                    document.getElementById('check-in-date').value = item.checkIn;
+                    document.getElementById('check-out-date').value = item.checkOut;
+                    document.getElementById('channel-type').value = item.channel;
+                    document.getElementById('payment-status').value = item.paymentStatus || 'Pagado';
+                    document.getElementById('total-price').value = item.totalPrice;
+                    document.getElementById('booking-commission').value = item.bookingCommission;
+                    document.getElementById('cleaning-fee').value = item.cleaningFee || '';
+                    document.getElementById('cleaning-payment-date').value = item.cleaningDate || '';
+
+                    toggleCommissionField();
+                    document.getElementById('modal-title').innerText = 'Editar Registro de Huésped';
+                }
+            }
+
+            calculateNights();
+            document.getElementById('modal-guest').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-guest').classList.add('hidden');
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const inDate = document.getElementById('check-in-date').value;
+            const outDate = document.getElementById('check-out-date').value;
+            const computedNights = calculateNightsBetween(inDate, outDate);
+
+            if (computedNights <= 0) {
+                showToast("La fecha de salida debe ser posterior a la de ingreso.", "error");
+                return;
+            }
+
+            const editId = document.getElementById('guest-id').value;
+            const cleanVal = document.getElementById('cleaning-fee').value;
+
+            const newGuest = {
+                id: editId ? editId : 'g-' + Date.now(),
+                clientName: document.getElementById('client-name').value.trim(),
+                clientId: document.getElementById('client-id').value.trim(),
+                apartment: document.getElementById('apartment-number').value.trim(),
+                checkIn: inDate,
+                checkOut: outDate,
+                nights: computedNights,
+                channel: document.getElementById('channel-type').value,
+                paymentStatus: document.getElementById('payment-status').value,
+                totalPrice: parseFloat(document.getElementById('total-price').value) || 0,
+                bookingCommission: parseFloat(document.getElementById('booking-commission').value) || 0,
+                cleaningFee: cleanVal !== '' ? parseFloat(cleanVal) : 0,
+                cleaningDate: document.getElementById('cleaning-payment-date').value || ''
+            };
+
+            if (editId) {
+                const index = guests.findIndex(g => g.id === editId);
+                if (index !== -1) guests[index] = newGuest;
+                showToast("Registro actualizado correctamente.");
+            } else {
+                guests.unshift(newGuest);
+                showToast("Huésped registrado exitosamente.");
+            }
+
+            saveToLocalStorage();
+            applyFilters();
+            closeModal();
+        }
+
+        function editGuest(id) {
+            openModal(id);
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('filter-search').value.toLowerCase().trim();
+            const channelFilter = document.getElementById('filter-channel').value;
+            const apartmentFilter = document.getElementById('filter-apartment').value;
+            const monthFilter = document.getElementById('filter-month').value;
+            const paymentFilter = document.getElementById('filter-payment').value;
+
+            const filtered = guests.filter(g => {
+                const matchesQuery = g.clientName.toLowerCase().includes(query) || 
+                                     g.clientId.toLowerCase().includes(query) ||
+                                     g.apartment.toLowerCase().includes(query);
+                
+                const matchesChannel = (channelFilter === 'ALL') || (g.channel === channelFilter);
+                const matchesApartment = (apartmentFilter === 'ALL') || (g.apartment === apartmentFilter);
+
+                // Month filter based on Check-in Date (YYYY-MM-DD)
+                let matchesMonth = true;
+                if (monthFilter !== 'ALL' && g.checkIn) {
+                    const checkInMonth = g.checkIn.split('-')[1]; // Extracts MM
+                    matchesMonth = (checkInMonth === monthFilter);
+                }
+
+                // Payment Status Filter
+                let matchesPayment = true;
+                if (paymentFilter !== 'ALL') {
+                    matchesPayment = ((g.paymentStatus || 'Pagado') === paymentFilter);
+                }
+
+                return matchesQuery && matchesChannel && matchesApartment && matchesMonth && matchesPayment;
+            });
+
+            renderUI(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-channel').value = 'ALL';
+            document.getElementById('filter-apartment').value = 'ALL';
+            document.getElementById('filter-month').value = 'ALL';
+            document.getElementById('filter-payment').value = 'ALL';
+            applyFilters();
+        }
+
+        function exportToCSV() {
+            if (guests.length === 0) {
+                showToast("No hay registros para exportar.", "error");
+                return;
+            }
+
+            let csvContent = "\uFEFF";
+            csvContent += "Nombre Cliente;Número Cédula;Estado Pago;Apartaestudio;Fecha Ingreso;Fecha Salida;Noches Totales;Canal / Plataforma;Valor Total Cobrado;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
+
+            guests.forEach(g => {
+                const cleanVal = parseFloat(g.cleaningFee) || 0;
+                const netApprox = (g.totalPrice || 0) - (g.bookingCommission || 0) - cleanVal;
+                const row = [
+                    `"${g.clientName.replace(/"/g, '""')}"`,
+                    `"${g.clientId}"`,
+                    `"${g.paymentStatus || 'Pagado'}"`,
+                    `"${g.apartment}"`,
+                    g.checkIn,
+                    g.checkOut,
+                    g.nights,
+                    `"${g.channel}"`,
+                    g.totalPrice,
+                    g.bookingCommission,
+                    cleanVal,
+                    g.cleaningDate || '',
+                    netApprox
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Control_Huespedes_Apartaestudios_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("Archivo Excel/CSV generado con éxito.");
+        }
+
+        function confirmDelete(id) {
+            deleteTargetId = id;
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            deleteTargetId = null;
+            document.getElementById('modal-confirm').classList.add('hidden');
+        }
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+            if (deleteTargetId) {
+                guests = guests.filter(g => g.id !== deleteTargetId);
+                saveToLocalStorage();
+                applyFilters();
+                showToast("Registro eliminado con éxito.");
+            }
+            closeConfirmModal();
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-message');
+
+            msg.innerText = message;
+            if (type === 'error') {
+                icon.className = "fa-solid fa-circle-xmark text-rose-400";
+            } else {
+                icon.className = "fa-solid fa-circle-check text-emerald-400";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('apartaestudios_guests_v1', JSON.stringify(guests));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('apartaestudios_guests_v1');
+            if (saved) {
+                try {
+                    guests = JSON.parse(saved);
+                } catch(e) {
+                    guests = getInitialDemoData();
+                }
+            } else {
+                guests = getInitialDemoData();
+            }
+        }
+
+        function loadDemoData() {
+            guests = getInitialDemoData();
+            saveToLocalStorage();
+            applyFilters();
+            showToast("Datos de demostración cargados.");
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        window.onload = function() {
+            loadFromLocalStorage();
+            renderUI();
+        };
+    </script>
+</body>
+</html>
