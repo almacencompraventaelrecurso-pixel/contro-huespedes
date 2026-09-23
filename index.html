@@ -70,9 +70,6 @@
                     <i class="fa-solid fa-file-excel"></i>
                     <span class="hidden md:inline">Exportar Excel</span>
                 </button>
-                <button onclick="loadDemoData()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition-all" title="Cargar datos de prueba">
-                    <i class="fa-solid fa-database mr-1"></i> Demo
-                </button>
             </div>
         </div>
     </header>
@@ -905,18 +902,11 @@
                 try {
                     guests = JSON.parse(saved);
                 } catch(e) {
-                    guests = getInitialDemoData();
+                    guests = [];
                 }
             } else {
-                guests = getInitialDemoData();
+                guests = [];
             }
-        }
-
-        function loadDemoData() {
-            guests = getInitialDemoData();
-            saveToLocalStorage();
-            applyFilters();
-            showToast("Datos de demostración cargados.");
         }
 
         function escapeHTML(str) {
