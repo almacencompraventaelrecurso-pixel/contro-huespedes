@@ -175,10 +175,10 @@
                         <option value="06">Junio</option>
                         <option value="07">Julio</option>
                         <option value="08">Agosto</option>
-                        <option value="09">Septiembre</option>
-                        <option value="10">Octubre</option>
-                        <option value="11">Noviembre</option>
-                        <option value="12">Diciembre</option>
+                <!-- Month / Year Filter -->
+                <div>
+                    <select id="filter-month" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
+                        <option value="ALL">Todos los meses y años</option>
                     </select>
                 </div>
 
@@ -623,6 +623,7 @@
 
             updateKPIs(dataToRender);
             updateApartmentDropdownOptions();
+            updateMonthYearDropdownOptions();
         }
 
         function updateKPIs(dataset = guests) {
@@ -674,6 +675,53 @@
             });
 
             select.value = currentValue;
+        }
+
+        function updateMonthYearDropdownOptions() {
+            const select = document.getElementById('filter-month');
+            const currentValue = select.value;
+
+            const monthNames = [
+                'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+            ];
+
+            const periodsSet = new Set();
+            const currentYear = new Date().getFullYear();
+
+            // Always add all months of current year
+            for (let m = 1; m <= 12; m++) {
+                const mStr = m < 10 ? '0' + m : '' + m;
+                periodsSet.add(`${currentYear}-${mStr}`);
+            }
+
+            // Add any other YYYY-MM periods present in the guest data
+            guests.forEach(g => {
+                if (g.checkIn && g.checkIn.length >= 7) {
+                    periodsSet.add(g.checkIn.substring(0, 7));
+                }
+            });
+
+            // Sort periods in descending order (newest first)
+            const sortedPeriods = Array.from(periodsSet).sort().reverse();
+
+            select.innerHTML = '<option value="ALL">Todos los meses y años</option>';
+            sortedPeriods.forEach(period => {
+                const [year, month] = period.split('-');
+                const monthIndex = parseInt(month, 10) - 1;
+                if (monthIndex >= 0 && monthIndex < 12) {
+                    const opt = document.createElement('option');
+                    opt.value = period; // Format: "YYYY-MM" e.g., "2026-09"
+                    opt.innerText = `${monthNames[monthIndex]} ${year}`; // e.g., "Septiembre 2026"
+                    select.appendChild(opt);
+                }
+            });
+
+            if (Array.from(select.options).some(o => o.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = 'ALL';
+            }
         }
 
         function openModal(editId = null) {
@@ -791,8 +839,7 @@
 
                 let matchesMonth = true;
                 if (monthFilter !== 'ALL' && g.checkIn) {
-                    const checkInMonth = g.checkIn.split('-')[1];
-                    matchesMonth = (checkInMonth === monthFilter);
+                    matchesMonth = g.checkIn.startsWith(monthFilter);
                 }
 
                 const total = parseFloat(g.totalPrice) || 0;
