@@ -137,7 +137,7 @@
 
         <!-- Filters Toolbar -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <!-- Search input -->
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -188,6 +188,15 @@
                         <option value="ALL">Todos los estados de pago</option>
                         <option value="PENDING" class="text-amber-600 font-bold">⚠️ Con Saldo Pendiente / Deben</option>
                         <option value="PAID" class="text-emerald-600 font-bold">✅ Totalmente Pagados</option>
+                    </select>
+                </div>
+
+                <!-- Cleaning Status Filter -->
+                <div>
+                    <select id="filter-cleaning" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
+                        <option value="ALL">Todos los estados de aseo</option>
+                        <option value="PENDING" class="text-amber-600 font-bold">🧹 Aseo Pendiente / Por liquidar</option>
+                        <option value="PAID" class="text-emerald-600 font-bold">✅ Aseo Pagado</option>
                     </select>
                 </div>
             </div>
@@ -770,6 +779,7 @@
             const apartmentFilter = document.getElementById('filter-apartment').value;
             const monthFilter = document.getElementById('filter-month').value;
             const paymentFilter = document.getElementById('filter-payment').value;
+            const cleaningFilter = document.getElementById('filter-cleaning').value;
 
             const filtered = guests.filter(g => {
                 const matchesQuery = g.clientName.toLowerCase().includes(query) || 
@@ -796,7 +806,18 @@
                     matchesPayment = (pending <= 0);
                 }
 
-                return matchesQuery && matchesChannel && matchesApartment && matchesMonth && matchesPayment;
+                // Cleaning payment condition: paid if cleaningFee > 0 and cleaningDate is set
+                const cleanVal = parseFloat(g.cleaningFee) || 0;
+                const isCleaningPaid = cleanVal > 0 && g.cleaningDate && g.cleaningDate.trim() !== '';
+
+                let matchesCleaning = true;
+                if (cleaningFilter === 'PENDING') {
+                    matchesCleaning = !isCleaningPaid;
+                } else if (cleaningFilter === 'PAID') {
+                    matchesCleaning = isCleaningPaid;
+                }
+
+                return matchesQuery && matchesChannel && matchesApartment && matchesMonth && matchesPayment && matchesCleaning;
             });
 
             renderUI(filtered);
@@ -808,6 +829,7 @@
             document.getElementById('filter-apartment').value = 'ALL';
             document.getElementById('filter-month').value = 'ALL';
             document.getElementById('filter-payment').value = 'ALL';
+            document.getElementById('filter-cleaning').value = 'ALL';
             applyFilters();
         }
 
