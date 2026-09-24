@@ -35,15 +35,10 @@
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        /* Custom scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f5f9; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -78,55 +73,65 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
 
         <!-- KPI Metrics Dashboard -->
-        <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
             <!-- Metric 1: Total Noches -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
                     <span>Noches Totales</span>
                     <i class="fa-solid fa-moon text-indigo-500"></i>
                 </div>
-                <div id="kpi-nights" class="text-2xl font-extrabold text-slate-800">0</div>
-                <div id="kpi-reservations" class="text-xs text-slate-500 mt-1">0 reservas</div>
+                <div id="kpi-nights" class="text-xl font-extrabold text-slate-800">0</div>
+                <div id="kpi-reservations" class="text-[11px] text-slate-500 mt-0.5">0 reservas</div>
             </div>
 
-            <!-- Metric 2: Cobro Bruto -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-                    <span>Cobro Total</span>
+            <!-- Metric 2: Cobro Bruto Total -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                    <span>Valor Total</span>
                     <i class="fa-solid fa-hand-holding-dollar text-emerald-500"></i>
                 </div>
-                <div id="kpi-gross" class="text-2xl font-extrabold text-slate-800">$0</div>
-                <div class="text-xs text-slate-500 mt-1">Monto gastado clientes</div>
+                <div id="kpi-gross" class="text-xl font-extrabold text-slate-800">$0</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Costo estadías</div>
             </div>
 
-            <!-- Metric 3: Comisiones Booking -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+            <!-- Metric 3: Por Cobrar (Saldos Pendientes) -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-amber-200 bg-amber-50/30">
+                <div class="flex items-center justify-between text-amber-700 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                    <span>Por Cobrar</span>
+                    <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
+                </div>
+                <div id="kpi-pending" class="text-xl font-extrabold text-amber-600">$0</div>
+                <div id="kpi-pending-count" class="text-[11px] text-amber-700 mt-0.5">0 deudas pendientes</div>
+            </div>
+
+            <!-- Metric 4: Comisiones Booking -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
                     <span>Comisión Booking</span>
                     <i class="fa-solid fa-percent text-blue-600"></i>
                 </div>
-                <div id="kpi-commission" class="text-2xl font-extrabold text-rose-600">$0</div>
-                <div class="text-xs text-slate-500 mt-1">Gastos de plataforma</div>
+                <div id="kpi-commission" class="text-xl font-extrabold text-rose-600">$0</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Gastos plataforma</div>
             </div>
 
-            <!-- Metric 4: Gastos de Aseo -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+            <!-- Metric 5: Gastos de Aseo -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
                     <span>Gastos Aseo</span>
                     <i class="fa-solid fa-broom text-amber-500"></i>
                 </div>
-                <div id="kpi-cleaning" class="text-2xl font-extrabold text-amber-600">$0</div>
-                <div id="kpi-cleaning-status" class="text-xs text-slate-500 mt-1">Pagados a personal</div>
+                <div id="kpi-cleaning" class="text-xl font-extrabold text-amber-600">$0</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Pago a personal</div>
             </div>
 
-            <!-- Metric 5: Ingreso Neto -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
-                <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-                    <span>Ingreso Neto Real</span>
+            <!-- Metric 6: Ingreso Neto -->
+            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
+                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
+                    <span>Ingreso Neto</span>
                     <i class="fa-solid fa-wallet text-brand-600"></i>
                 </div>
-                <div id="kpi-net" class="text-2xl font-extrabold text-brand-600">$0</div>
-                <div class="text-xs text-slate-500 mt-1">Ganancia limpia</div>
+                <div id="kpi-net" class="text-xl font-extrabold text-brand-600">$0</div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Ganancia limpia</div>
             </div>
         </section>
 
@@ -144,7 +149,7 @@
                 <!-- Platform Filter -->
                 <div>
                     <select id="filter-channel" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
-                        <option value="ALL">Todas las plataformas (Canal)</option>
+                        <option value="ALL">Todas las plataformas</option>
                         <option value="Booking">Booking.com</option>
                         <option value="Airbnb">Airbnb</option>
                         <option value="Cliente Fidelizado">Cliente Fidelizado (Directo)</option>
@@ -155,7 +160,6 @@
                 <div>
                     <select id="filter-apartment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
                         <option value="ALL">Todos los apartaestudios</option>
-                        <!-- Dynamic options loaded via JS -->
                     </select>
                 </div>
 
@@ -182,8 +186,8 @@
                 <div>
                     <select id="filter-payment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
                         <option value="ALL">Todos los estados de pago</option>
-                        <option value="Pendiente" class="text-rose-600 font-bold">⚠️ Pendientes de pago</option>
-                        <option value="Pagado" class="text-emerald-600 font-bold">✅ Pagados</option>
+                        <option value="PENDING" class="text-amber-600 font-bold">⚠️ Con Saldo Pendiente / Deben</option>
+                        <option value="PAID" class="text-emerald-600 font-bold">✅ Totalmente Pagados</option>
                     </select>
                 </div>
             </div>
@@ -210,12 +214,12 @@
                     <thead>
                         <tr class="bg-slate-100/80 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
                             <th class="py-3 px-4">Cliente / Cédula</th>
-                            <th class="py-3 px-4">Estado Pago</th>
+                            <th class="py-3 px-4">Estado de Pago</th>
                             <th class="py-3 px-4">Apto</th>
                             <th class="py-3 px-4">Fechas (Ingreso / Salida)</th>
                             <th class="py-3 px-4 text-center">Noches</th>
                             <th class="py-3 px-4">Canal</th>
-                            <th class="py-3 px-4 text-right">Valor Noche / Total</th>
+                            <th class="py-3 px-4 text-right">Total / Pagado / Saldo</th>
                             <th class="py-3 px-4 text-right">Comisión Booking</th>
                             <th class="py-3 px-4 text-right">Aseo (Valor & Fecha)</th>
                             <th class="py-3 px-4 text-right">Neto Aprox.</th>
@@ -234,7 +238,7 @@
                     <i class="fa-solid fa-folder-open text-2xl"></i>
                 </div>
                 <h3 class="text-slate-700 font-semibold mb-1">No hay huéspedes registrados</h3>
-                <p class="text-slate-500 text-xs max-w-sm mx-auto mb-4">Haz clic en "Nuevo Registro" para empezar a llevar el control de tus apartaestudios o carga los datos de demostración.</p>
+                <p class="text-slate-500 text-xs max-w-sm mx-auto mb-4">Haz clic en "Nuevo Registro" para empezar a llevar el control de tus apartaestudios.</p>
                 <button onclick="openModal()" class="bg-brand-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-brand-600 inline-flex items-center gap-1.5">
                     <i class="fa-solid fa-plus"></i> Registrar Primer Huésped
                 </button>
@@ -308,31 +312,20 @@
                     </div>
                 </div>
 
-                <!-- Sección: Canal y Comisiones -->
+                <!-- Sección: Canal y Valores Financieros -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-diagram-project text-brand-500"></i> Canal, Pago & Valores Financieros
+                        <i class="fa-solid fa-diagram-project text-brand-500"></i> Canal y Registro de Pagos
                     </h4>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Plataforma / Canal *</label>
                             <select id="channel-type" onchange="toggleCommissionField()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                                 <option value="Booking">Booking.com</option>
                                 <option value="Airbnb">Airbnb</option>
-                                <option value="Cliente Fidelizado">Cliente Fidelizado</option>
+                                <option value="Cliente Fidelizado">Cliente Fidelizado (Directo)</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Estado del Pago del Hospedaje *</label>
-                            <select id="payment-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none font-medium">
-                                <option value="Pagado">✅ Pagado</option>
-                                <option value="Pendiente">⚠️ Pendiente de Pago</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Valor Total Cobrado ($) *</label>
-                            <input type="number" id="total-price" min="0" step="any" required placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">
@@ -342,22 +335,42 @@
                             <input type="number" id="booking-commission" min="0" step="any" placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                         </div>
                     </div>
+
+                    <!-- Abonos y Control de Deuda -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded-lg border border-slate-200 mb-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">Valor Total Estadía Completa ($) *</label>
+                            <input type="number" id="total-price" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 300000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <span class="text-[10px] text-slate-400">Suma total de todas las noches</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">Monto Pagado / Abonado ($) *</label>
+                            <input type="number" id="paid-amount" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 100000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-emerald-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <span class="text-[10px] text-slate-400">Lo que el cliente te ha entregado</span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Balance Indicator -->
+                    <div id="balance-banner" class="p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-emerald-50 text-emerald-800 border-emerald-200">
+                        <span id="balance-status-text"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Reserva totalmente pagada</span>
+                        <span id="balance-amount-text" class="font-bold">Saldo Pendiente: $0</span>
+                    </div>
                 </div>
 
-                <!-- Sección: Control de Aseo (Opcional al ingreso) -->
+                <!-- Sección: Control de Aseo -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
                             <i class="fa-solid fa-broom text-brand-500"></i> Registro de Aseo
                         </h4>
                         <span class="text-[11px] text-slate-500 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium">
-                            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>Opcional al ingresar. Se puede completar al salir.
+                            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>Se define al terminar la estadía
                         </span>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Valor del Aseo ($) <span class="text-slate-400 font-normal">(Opcional)</span></label>
-                            <input type="number" id="cleaning-fee" min="0" step="any" placeholder="Ej: 40000 (Dejar en blanco si se define al salir)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <input type="number" id="cleaning-fee" min="0" step="any" placeholder="Ej: 40000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Pago del Aseo <span class="text-slate-400 font-normal">(Opcional)</span></label>
@@ -410,69 +423,6 @@
         let guests = [];
         let deleteTargetId = null;
 
-        // Sample initial data generator
-        function getInitialDemoData() {
-            const today = new Date();
-            const formatDate = (dateObj) => dateObj.toISOString().split('T')[0];
-
-            const d1 = new Date(today); d1.setDate(today.getDate() - 10);
-            const d1_out = new Date(d1); d1_out.setDate(d1.getDate() + 4);
-
-            const d2 = new Date(today); d2.setDate(today.getDate() - 4);
-            const d2_out = new Date(d2); d2_out.setDate(d2.getDate() + 3);
-
-            const d3 = new Date(today); d3.setDate(today.getDate() + 1);
-            const d3_out = new Date(d3); d3_out.setDate(d3.getDate() + 5);
-
-            return [
-                {
-                    id: 'g-101',
-                    clientName: 'María Fernanda Gómez',
-                    clientId: '1098765432',
-                    apartment: 'Apto 101',
-                    checkIn: formatDate(d1),
-                    checkOut: formatDate(d1_out),
-                    nights: 4,
-                    channel: 'Booking',
-                    paymentStatus: 'Pagado',
-                    totalPrice: 480000,
-                    bookingCommission: 72000,
-                    cleaningFee: 40000,
-                    cleaningDate: formatDate(d1_out)
-                },
-                {
-                    id: 'g-102',
-                    clientName: 'Alejandro Restrepo',
-                    clientId: '80123456',
-                    apartment: 'Apto 202',
-                    checkIn: formatDate(d2),
-                    checkOut: formatDate(d2_out),
-                    nights: 3,
-                    channel: 'Airbnb',
-                    paymentStatus: 'Pendiente',
-                    totalPrice: 390000,
-                    bookingCommission: 0,
-                    cleaningFee: 0,
-                    cleaningDate: ''
-                },
-                {
-                    id: 'g-103',
-                    clientName: 'Carlos Eduardo Silva',
-                    clientId: '79888999',
-                    apartment: 'Apto 101',
-                    checkIn: formatDate(d3),
-                    checkOut: formatDate(d3_out),
-                    nights: 4,
-                    channel: 'Cliente Fidelizado',
-                    paymentStatus: 'Pagado',
-                    totalPrice: 400000,
-                    bookingCommission: 0,
-                    cleaningFee: 40000,
-                    cleaningDate: formatDate(d3)
-                }
-            ];
-        }
-
         // Date difference calculation logic (Checkout date is excluded)
         function calculateNightsBetween(startDateStr, endDateStr) {
             if (!startDateStr || !endDateStr) return 0;
@@ -485,7 +435,6 @@
             return Math.ceil(diffTime / (1000 * 3600 * 24));
         }
 
-        // Live handler in modal form
         function calculateNights() {
             const inDate = document.getElementById('check-in-date').value;
             const outDate = document.getElementById('check-out-date').value;
@@ -502,7 +451,27 @@
             }
         }
 
-        // Toggle Booking commission input based on platform
+        // Live calculations for pending balance in Modal Form
+        function calculatePendingBalance() {
+            const total = parseFloat(document.getElementById('total-price').value) || 0;
+            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+            const pending = Math.max(0, total - paid);
+
+            const banner = document.getElementById('balance-banner');
+            const statusText = document.getElementById('balance-status-text');
+            const amountText = document.getElementById('balance-amount-text');
+
+            amountText.innerText = `Saldo Pendiente: ${formatCOP(pending)}`;
+
+            if (total > 0 && paid < total) {
+                banner.className = "p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-amber-50 text-amber-900 border-amber-300";
+                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i> El huésped queda debiendo ${formatCOP(pending)}`;
+            } else {
+                banner.className = "p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-emerald-50 text-emerald-800 border-emerald-200";
+                statusText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Totalmente pagado`;
+            }
+        }
+
         function toggleCommissionField() {
             const channel = document.getElementById('channel-type').value;
             const commInput = document.getElementById('booking-commission');
@@ -526,7 +495,6 @@
             }
         }
 
-        // Currency Formatter
         function formatCOP(amount) {
             return new Intl.NumberFormat('es-CO', {
                 style: 'currency',
@@ -563,21 +531,30 @@
                         iconClass = "fa-solid fa-house-chimney-window";
                     }
 
-                    // Payment status badge
-                    const isPaid = (g.paymentStatus || 'Pagado') === 'Pagado';
-                    const paymentBadge = isPaid
-                        ? `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-circle-check text-xs"></i> Pagado</span>`
-                        : `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[11px] animate-pulse"><i class="fa-solid fa-clock text-xs"></i> Pendiente</span>`;
+                    // Balance logic
+                    const total = parseFloat(g.totalPrice) || 0;
+                    const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
+                    const pending = Math.max(0, total - paid);
 
-                    // Cleaning cell rendering (handles empty/unpaid cleaning fee)
+                    // Payment status badge
+                    let paymentBadge = '';
+                    if (pending <= 0) {
+                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-circle-check text-xs"></i> Pagado</span>`;
+                    } else if (paid > 0) {
+                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-triangle-exclamation text-xs text-amber-600"></i> Pago Parcial</span>`;
+                    } else {
+                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[11px] animate-pulse"><i class="fa-solid fa-clock text-xs"></i> Sin Pagar</span>`;
+                    }
+
+                    // Cleaning cell
                     const cleaningVal = parseFloat(g.cleaningFee) || 0;
                     const cleaningCell = cleaningVal > 0 
                         ? `<div class="text-amber-700 font-semibold">-${formatCOP(cleaningVal)}</div>
                            <div class="text-[11px] text-slate-400">Pago: ${g.cleaningDate || 'S.D.'}</div>`
                         : `<span class="inline-block bg-slate-100 text-slate-500 text-[11px] px-2 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
 
-                    // Calculate net approx for row
-                    const netApprox = (g.totalPrice || 0) - (g.bookingCommission || 0) - cleaningVal;
+                    // Calculated Net Approx
+                    const netApprox = total - (parseFloat(g.bookingCommission) || 0) - cleaningVal;
 
                     tr.innerHTML = `
                         <td class="py-3 px-4 font-medium">
@@ -606,10 +583,12 @@
                                 <i class="${iconClass} text-[10px]"></i> ${g.channel}
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-right font-semibold text-slate-800 whitespace-nowrap">
-                            ${formatCOP(g.totalPrice)}
+                        <td class="py-3 px-4 text-right text-xs whitespace-nowrap">
+                            <div class="font-bold text-slate-900">Total: ${formatCOP(total)}</div>
+                            <div class="text-emerald-600">Pagado: ${formatCOP(paid)}</div>
+                            ${pending > 0 ? `<div class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded border border-rose-200 mt-0.5 inline-block">Debe: ${formatCOP(pending)}</div>` : `<div class="text-slate-400 text-[10px]">Deuda: $0</div>`}
                         </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                        <td class="py-3 px-4 text-right whitespace-nowrap text-xs">
                             ${g.bookingCommission > 0 ? `<span class="text-rose-600 font-medium">-${formatCOP(g.bookingCommission)}</span>` : `<span class="text-slate-300">$0</span>`}
                         </td>
                         <td class="py-3 px-4 text-right whitespace-nowrap text-xs">
@@ -620,7 +599,7 @@
                         </td>
                         <td class="py-3 px-4 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
-                                <button onclick="editGuest('${g.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Editar">
+                                <button onclick="editGuest('${g.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Editar / Actualizar Pago">
                                     <i class="fa-solid fa-pen-to-square text-sm"></i>
                                 </button>
                                 <button onclick="confirmDelete('${g.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Eliminar">
@@ -637,16 +616,24 @@
             updateApartmentDropdownOptions();
         }
 
-        // Calculate and display dashboard KPIs
         function updateKPIs(dataset = guests) {
             let totalNights = 0;
             let totalGross = 0;
+            let totalPending = 0;
+            let pendingCount = 0;
             let totalCommission = 0;
             let totalCleaning = 0;
 
             dataset.forEach(g => {
+                const total = parseFloat(g.totalPrice) || 0;
+                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
+                const pending = Math.max(0, total - paid);
+
                 totalNights += (parseInt(g.nights) || 0);
-                totalGross += (parseFloat(g.totalPrice) || 0);
+                totalGross += total;
+                totalPending += pending;
+                if (pending > 0) pendingCount++;
+
                 totalCommission += (parseFloat(g.bookingCommission) || 0);
                 totalCleaning += (parseFloat(g.cleaningFee) || 0);
             });
@@ -656,6 +643,8 @@
             document.getElementById('kpi-nights').innerText = totalNights;
             document.getElementById('kpi-reservations').innerText = `${dataset.length} ${dataset.length === 1 ? 'estancia' : 'estancias'}`;
             document.getElementById('kpi-gross').innerText = formatCOP(totalGross);
+            document.getElementById('kpi-pending').innerText = formatCOP(totalPending);
+            document.getElementById('kpi-pending-count').innerText = `${pendingCount} ${pendingCount === 1 ? 'cliente debe' : 'clientes deben'}`;
             document.getElementById('kpi-commission').innerText = formatCOP(totalCommission);
             document.getElementById('kpi-cleaning').innerText = formatCOP(totalCleaning);
             document.getElementById('kpi-net').innerText = formatCOP(totalNet);
@@ -687,13 +676,15 @@
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('check-in-date').value = todayStr;
             document.getElementById('cleaning-payment-date').value = '';
-            document.getElementById('payment-status').value = 'Pagado';
 
             toggleCommissionField();
 
             if (editId) {
                 const item = guests.find(g => g.id === editId);
                 if (item) {
+                    const total = parseFloat(item.totalPrice) || 0;
+                    const paid = item.paidAmount !== undefined ? parseFloat(item.paidAmount) : (item.paymentStatus === 'Pagado' ? total : 0);
+
                     document.getElementById('guest-id').value = item.id;
                     document.getElementById('client-name').value = item.clientName;
                     document.getElementById('client-id').value = item.clientId;
@@ -701,8 +692,8 @@
                     document.getElementById('check-in-date').value = item.checkIn;
                     document.getElementById('check-out-date').value = item.checkOut;
                     document.getElementById('channel-type').value = item.channel;
-                    document.getElementById('payment-status').value = item.paymentStatus || 'Pagado';
-                    document.getElementById('total-price').value = item.totalPrice;
+                    document.getElementById('total-price').value = total;
+                    document.getElementById('paid-amount').value = paid;
                     document.getElementById('booking-commission').value = item.bookingCommission;
                     document.getElementById('cleaning-fee').value = item.cleaningFee || '';
                     document.getElementById('cleaning-payment-date').value = item.cleaningDate || '';
@@ -713,6 +704,7 @@
             }
 
             calculateNights();
+            calculatePendingBalance();
             document.getElementById('modal-guest').classList.remove('hidden');
         }
 
@@ -734,6 +726,8 @@
 
             const editId = document.getElementById('guest-id').value;
             const cleanVal = document.getElementById('cleaning-fee').value;
+            const total = parseFloat(document.getElementById('total-price').value) || 0;
+            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
 
             const newGuest = {
                 id: editId ? editId : 'g-' + Date.now(),
@@ -744,8 +738,9 @@
                 checkOut: outDate,
                 nights: computedNights,
                 channel: document.getElementById('channel-type').value,
-                paymentStatus: document.getElementById('payment-status').value,
-                totalPrice: parseFloat(document.getElementById('total-price').value) || 0,
+                totalPrice: total,
+                paidAmount: paid,
+                paymentStatus: paid >= total ? 'Pagado' : (paid > 0 ? 'Parcial' : 'Pendiente'),
                 bookingCommission: parseFloat(document.getElementById('booking-commission').value) || 0,
                 cleaningFee: cleanVal !== '' ? parseFloat(cleanVal) : 0,
                 cleaningDate: document.getElementById('cleaning-payment-date').value || ''
@@ -784,17 +779,21 @@
                 const matchesChannel = (channelFilter === 'ALL') || (g.channel === channelFilter);
                 const matchesApartment = (apartmentFilter === 'ALL') || (g.apartment === apartmentFilter);
 
-                // Month filter based on Check-in Date (YYYY-MM-DD)
                 let matchesMonth = true;
                 if (monthFilter !== 'ALL' && g.checkIn) {
-                    const checkInMonth = g.checkIn.split('-')[1]; // Extracts MM
+                    const checkInMonth = g.checkIn.split('-')[1];
                     matchesMonth = (checkInMonth === monthFilter);
                 }
 
-                // Payment Status Filter
+                const total = parseFloat(g.totalPrice) || 0;
+                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
+                const pending = Math.max(0, total - paid);
+
                 let matchesPayment = true;
-                if (paymentFilter !== 'ALL') {
-                    matchesPayment = ((g.paymentStatus || 'Pagado') === paymentFilter);
+                if (paymentFilter === 'PENDING') {
+                    matchesPayment = (pending > 0);
+                } else if (paymentFilter === 'PAID') {
+                    matchesPayment = (pending <= 0);
                 }
 
                 return matchesQuery && matchesChannel && matchesApartment && matchesMonth && matchesPayment;
@@ -819,21 +818,31 @@
             }
 
             let csvContent = "\uFEFF";
-            csvContent += "Nombre Cliente;Número Cédula;Estado Pago;Apartaestudio;Fecha Ingreso;Fecha Salida;Noches Totales;Canal / Plataforma;Valor Total Cobrado;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
+            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Noches Totales;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
 
             guests.forEach(g => {
+                const total = parseFloat(g.totalPrice) || 0;
+                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
+                const pending = Math.max(0, total - paid);
                 const cleanVal = parseFloat(g.cleaningFee) || 0;
-                const netApprox = (g.totalPrice || 0) - (g.bookingCommission || 0) - cleanVal;
+                const netApprox = total - (g.bookingCommission || 0) - cleanVal;
+
+                let statusStr = "Pagado";
+                if (pending > 0 && paid > 0) statusStr = "Pago Parcial";
+                else if (pending > 0 && paid === 0) statusStr = "Pendiente";
+
                 const row = [
                     `"${g.clientName.replace(/"/g, '""')}"`,
                     `"${g.clientId}"`,
-                    `"${g.paymentStatus || 'Pagado'}"`,
                     `"${g.apartment}"`,
                     g.checkIn,
                     g.checkOut,
                     g.nights,
                     `"${g.channel}"`,
-                    g.totalPrice,
+                    total,
+                    paid,
+                    pending,
+                    `"${statusStr}"`,
                     g.bookingCommission,
                     cleanVal,
                     g.cleaningDate || '',
