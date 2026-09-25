@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -56,7 +60,14 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Cloud Status Indicator Button -->
+                <button onclick="openCloudModal()" id="cloud-status-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-3 py-2 rounded-lg text-xs transition-all flex items-center gap-2 border border-slate-700">
+                    <span id="cloud-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="cloud-status-text">Modo Local</span>
+                    <i class="fa-solid fa-gear text-slate-400 text-xs"></i>
+                </button>
+
                 <button onclick="openModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm hover:shadow-md">
                     <i class="fa-solid fa-plus"></i>
                     <span>Nuevo Registro</span>
@@ -71,6 +82,27 @@
 
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- Cloud Sync Notification Banner -->
+        <div id="cloud-banner" class="mb-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-4 border border-indigo-700/50">
+            <div class="flex items-center gap-3.5">
+                <div class="p-3 bg-indigo-500/20 rounded-xl border border-indigo-400/30 text-indigo-300 text-xl">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm text-indigo-100">Sincronización Multidispositivo (Nube)</h3>
+                    <p class="text-xs text-indigo-200/80">Conecta tu aplicación a Google Firebase para compartir información al instante en otros celulares o computadores.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openCloudModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm">
+                    Configurar Nube
+                </button>
+                <button onclick="dismissBanner()" class="text-indigo-300 hover:text-white p-1 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
 
         <!-- KPI Metrics Dashboard -->
         <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
@@ -390,6 +422,61 @@
         </div>
     </div>
 
+    <!-- Modal Form for Firebase Cloud Database Configuration -->
+    <div id="modal-cloud" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
+            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-cloud text-indigo-400"></i>
+                    <h3 class="font-bold text-base">Conectar Base de Datos en la Nube</h3>
+                </div>
+                <button onclick="closeCloudModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4 text-xs text-slate-600">
+                <p class="leading-relaxed">
+                    Al conectar Firebase, cualquier cambio que hagas se reflejará al instante en todos los dispositivos conectados al mismo enlace web.
+                </p>
+
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
+                    <div>
+                        <label class="block font-semibold text-slate-800 mb-1">Database URL de Firebase *</label>
+                        <input type="text" id="cfg-database-url" placeholder="https://tu-proyecto-rtdb.firebaseio.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-800 mb-1">API Key de Firebase *</label>
+                        <input type="text" id="cfg-api-key" placeholder="AIzaSyA..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-800 mb-1">Project ID</label>
+                        <input type="text" id="cfg-project-id" placeholder="mi-proyecto-12345" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-[11px] text-amber-800">
+                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
+                    Obtén estas credenciales gratis en <strong>console.firebase.google.com</strong> activando <strong>Realtime Database</strong> en modo de prueba.
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <button type="button" onclick="disconnectCloud()" id="btn-disconnect-cloud" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg font-medium transition-all hidden">
+                        Desconectar Nube
+                    </button>
+                    <div class="flex gap-2 ml-auto">
+                        <button type="button" onclick="closeCloudModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100">
+                            Cancelar
+                        </button>
+                        <button type="button" onclick="saveCloudConfig()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-sm transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-plug"></i> Guardar y Conectar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Delete Confirmation Modal -->
     <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
@@ -419,8 +506,123 @@
     <script>
         let guests = [];
         let deleteTargetId = null;
+        let firebaseDb = null;
+        let isCloudActive = false;
 
-        // Date difference calculation logic (Checkout date is excluded)
+        // --- Firebase Cloud Sync Logic ---
+        function initFirebase() {
+            const savedConfig = localStorage.getItem('apartaestudios_firebase_config');
+            if (!savedConfig) {
+                updateSyncUI(false);
+                return;
+            }
+
+            try {
+                const config = JSON.parse(savedConfig);
+                if (!config.databaseURL || !config.apiKey) {
+                    updateSyncUI(false);
+                    return;
+                }
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(config);
+                }
+                
+                firebaseDb = firebase.database();
+                isCloudActive = true;
+                updateSyncUI(true);
+
+                // Real-time synchronization listener
+                firebaseDb.ref('guests').on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        guests = Object.values(data);
+                    } else {
+                        guests = [];
+                    }
+                    saveToLocalStorage(false); // backup locally without overwrite toast
+                    applyFilters();
+                }, (error) => {
+                    console.error("Firebase sync error:", error);
+                    showToast("Error de conexión con la nube. Usando datos locales.", "error");
+                    updateSyncUI(false);
+                });
+
+            } catch (err) {
+                console.error("Firebase config error:", err);
+                updateSyncUI(false);
+            }
+        }
+
+        function updateSyncUI(connected) {
+            const dot = document.getElementById('cloud-status-dot');
+            const text = document.getElementById('cloud-status-text');
+            const banner = document.getElementById('cloud-banner');
+            const disconnectBtn = document.getElementById('btn-disconnect-cloud');
+
+            if (connected) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50";
+                text.innerText = "Nube Activa";
+                if (banner) banner.classList.add('hidden');
+                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
+                text.innerText = "Modo Local";
+                if (disconnectBtn) disconnectBtn.classList.add('hidden');
+            }
+        }
+
+        function openCloudModal() {
+            const savedConfig = localStorage.getItem('apartaestudios_firebase_config');
+            if (savedConfig) {
+                try {
+                    const cfg = JSON.parse(savedConfig);
+                    document.getElementById('cfg-database-url').value = cfg.databaseURL || '';
+                    document.getElementById('cfg-api-key').value = cfg.apiKey || '';
+                    document.getElementById('cfg-project-id').value = cfg.projectId || '';
+                } catch(e){}
+            }
+            document.getElementById('modal-cloud').classList.remove('hidden');
+        }
+
+        function closeCloudModal() {
+            document.getElementById('modal-cloud').classList.add('hidden');
+        }
+
+        function saveCloudConfig() {
+            const dbUrl = document.getElementById('cfg-database-url').value.trim();
+            const apiKey = document.getElementById('cfg-api-key').value.trim();
+            const projId = document.getElementById('cfg-project-id').value.trim();
+
+            if (!dbUrl || !apiKey) {
+                showToast("Por favor ingresa la Database URL y la API Key.", "error");
+                return;
+            }
+
+            const config = {
+                databaseURL: dbUrl,
+                apiKey: apiKey,
+                projectId: projId || 'apartaestudios-app'
+            };
+
+            localStorage.setItem('apartaestudios_firebase_config', JSON.stringify(config));
+            closeCloudModal();
+            showToast("Configuración guardada. Conectando a la nube...");
+            setTimeout(() => { window.location.reload(); }, 1200);
+        }
+
+        function disconnectCloud() {
+            localStorage.removeItem('apartaestudios_firebase_config');
+            closeCloudModal();
+            showToast("Sincronización deshabilitada. Modo local activo.");
+            setTimeout(() => { window.location.reload(); }, 1200);
+        }
+
+        function dismissBanner() {
+            document.getElementById('cloud-banner').classList.add('hidden');
+        }
+
+        // --- Date difference calculation logic (Checkout date is excluded) ---
         function calculateNightsBetween(startDateStr, endDateStr) {
             if (!startDateStr || !endDateStr) return 0;
             const start = new Date(startDateStr);
@@ -800,7 +1002,12 @@
                 showToast("Huésped registrado exitosamente.");
             }
 
+            // Sync with Firebase or LocalStorage
+            if (isCloudActive && firebaseDb) {
+                firebaseDb.ref('guests/' + newGuest.id).set(newGuest);
+            }
             saveToLocalStorage();
+
             applyFilters();
             closeModal();
         }
@@ -932,6 +1139,9 @@
 
         document.getElementById('btn-confirm-delete').addEventListener('click', () => {
             if (deleteTargetId) {
+                if (isCloudActive && firebaseDb) {
+                    firebaseDb.ref('guests/' + deleteTargetId).remove();
+                }
                 guests = guests.filter(g => g.id !== deleteTargetId);
                 saveToLocalStorage();
                 applyFilters();
@@ -958,7 +1168,7 @@
             }, 3000);
         }
 
-        function saveToLocalStorage() {
+        function saveToLocalStorage(showToastAlert = false) {
             localStorage.setItem('apartaestudios_guests_v1', JSON.stringify(guests));
         }
 
@@ -990,6 +1200,7 @@
         window.onload = function() {
             loadFromLocalStorage();
             renderUI();
+            initFirebase();
         };
     </script>
 </body>
