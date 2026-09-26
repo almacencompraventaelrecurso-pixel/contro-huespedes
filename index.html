@@ -47,7 +47,6 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Header Navigation -->
     <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-3">
@@ -80,7 +79,6 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
 
         <!-- Cloud Sync Notification Banner -->
@@ -104,7 +102,6 @@
             </div>
         </div>
 
-        <!-- KPI Metrics Dashboard -->
         <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
             <!-- Metric 1: Total Noches -->
             <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
@@ -167,7 +164,6 @@
             </div>
         </section>
 
-        <!-- Filters Toolbar -->
         <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <!-- Search input -->
@@ -229,7 +225,6 @@
             </div>
         </section>
 
-        <!-- Main Data Table Container -->
         <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                 <div class="flex items-center gap-2">
@@ -238,21 +233,21 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto w-full">
-                <table class="w-full text-left text-sm border-collapse">
+            <div class="w-full overflow-x-auto lg:overflow-x-visible">
+                <table class="w-full text-left text-xs border-collapse table-auto">
                     <thead>
-                        <tr class="bg-slate-100/80 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
-                            <th class="py-3 px-4">Cliente / Cédula</th>
-                            <th class="py-3 px-4">Estado de Pago</th>
-                            <th class="py-3 px-4">Apto</th>
-                            <th class="py-3 px-4">Fechas (Ingreso / Salida)</th>
-                            <th class="py-3 px-4 text-center">Noches</th>
-                            <th class="py-3 px-4">Canal</th>
-                            <th class="py-3 px-4 text-right">Total / Pagado / Saldo</th>
-                            <th class="py-3 px-4 text-right">Comisión Booking</th>
-                            <th class="py-3 px-4 text-right">Aseo (Valor & Fecha)</th>
-                            <th class="py-3 px-4 text-right">Neto Aprox.</th>
-                            <th class="py-3 px-4 text-center">Acciones</th>
+                        <tr class="bg-slate-100/80 text-slate-600 font-semibold text-[11px] uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-2.5 px-2">Cliente / Cédula</th>
+                            <th class="py-2.5 px-1.5">Estado</th>
+                            <th class="py-2.5 px-1.5">Apto</th>
+                            <th class="py-2.5 px-1.5">Fechas</th>
+                            <th class="py-2.5 px-1.5 text-center">Noches</th>
+                            <th class="py-2.5 px-1.5">Canal</th>
+                            <th class="py-2.5 px-1.5 text-right">Cobro / Pago / Deuda</th>
+                            <th class="py-2.5 px-1.5 text-right">Comisión</th>
+                            <th class="py-2.5 px-1.5 text-right">Aseo</th>
+                            <th class="py-2.5 px-1.5 text-right">Neto</th>
+                            <th class="py-2.5 px-1.5 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="guests-table-body" class="divide-y divide-slate-200">
@@ -275,7 +270,6 @@
         </section>
     </main>
 
-    <!-- Modal Form for Adding/Editing Guest -->
     <div id="modal-guest" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
             
@@ -513,7 +507,6 @@
         <span id="toast-message" class="text-xs font-medium">Operación realizada con éxito</span>
     </div>
 
-    <!-- JavaScript Application Logic -->
     <script>
         let guests = [];
         let deleteTargetId = null;
@@ -633,7 +626,6 @@
             document.getElementById('cloud-banner').classList.add('hidden');
         }
 
-        // --- Date difference calculation logic (Checkout date is excluded) ---
         function calculateNightsBetween(startDateStr, endDateStr) {
             if (!startDateStr || !endDateStr) return 0;
             const start = new Date(startDateStr);
@@ -661,7 +653,6 @@
             }
         }
 
-        // Live calculations for pending balance in Modal Form
         function calculatePendingBalance() {
             const total = parseFloat(document.getElementById('total-price').value) || 0;
             const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
@@ -759,61 +750,61 @@
                     // Cleaning cell
                     const cleaningVal = parseFloat(g.cleaningFee) || 0;
                     const cleaningCell = cleaningVal > 0 
-                        ? `<div class="text-amber-700 font-semibold">-${formatCOP(cleaningVal)}</div>
-                           <div class="text-[11px] text-slate-400">Pago: ${g.cleaningDate || 'S.D.'}</div>`
-                        : `<span class="inline-block bg-slate-100 text-slate-500 text-[11px] px-2 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
+                        ? `<div class="text-amber-700 font-semibold text-[11px]">-${formatCOP(cleaningVal)}</div>
+                           <div class="text-[10px] text-slate-400">Pago: ${g.cleaningDate || 'S.D.'}</div>`
+                        : `<span class="inline-block bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
 
                     // Calculated Net Approx
                     const netApprox = total - (parseFloat(g.bookingCommission) || 0) - cleaningVal;
 
                     tr.innerHTML = `
-                        <td class="py-3 px-4 font-medium">
-                            <div class="text-slate-900 font-semibold">${escapeHTML(g.clientName)}</div>
-                            <div class="text-xs text-slate-400 font-mono">C.C: ${escapeHTML(g.clientId)}</div>
+                        <td class="py-2 px-2 font-medium max-w-[150px]">
+                            <div class="text-slate-900 font-semibold text-xs leading-tight break-words">${escapeHTML(g.clientName)}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">C.C: ${escapeHTML(g.clientId)}</div>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+                        <td class="py-2 px-1.5 whitespace-nowrap">
                             ${paymentBadge}
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="bg-slate-100 text-slate-800 font-medium px-2.5 py-1 rounded-md text-xs border border-slate-200">
+                        <td class="py-2 px-1.5 whitespace-nowrap">
+                            <span class="bg-slate-100 text-slate-800 font-medium px-1.5 py-0.5 rounded-md text-[11px] border border-slate-200">
                                 ${escapeHTML(g.apartment)}
                             </span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap text-xs">
-                            <div class="text-emerald-700 font-medium"><i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> ${g.checkIn}</div>
-                            <div class="text-rose-600 font-medium"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> ${g.checkOut}</div>
+                        <td class="py-2 px-1.5 whitespace-nowrap text-xs">
+                            <div class="text-emerald-700 font-medium text-[10px]"><i class="fa-solid fa-arrow-right-to-bracket mr-1"></i>${g.checkIn}</div>
+                            <div class="text-rose-600 font-medium text-[10px]"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i>${g.checkOut}</div>
                         </td>
-                        <td class="py-3 px-4 text-center font-bold text-slate-800 whitespace-nowrap">
-                            <span class="inline-block px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs">
+                        <td class="py-2 px-1.5 text-center font-bold text-slate-800 whitespace-nowrap">
+                            <span class="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px]">
                                 ${g.nights} ${g.nights === 1 ? 'Noche' : 'Noches'}
                             </span>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${badgeClass}">
-                                <i class="${iconClass} text-[10px]"></i> ${g.channel}
+                        <td class="py-2 px-1.5 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}">
+                                <i class="${iconClass} text-[9px]"></i> ${g.channel}
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-right text-xs whitespace-nowrap">
-                            <div class="font-bold text-slate-900">Total: ${formatCOP(total)}</div>
-                            <div class="text-emerald-600">Pagado: ${formatCOP(paid)}</div>
-                            ${pending > 0 ? `<div class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded border border-rose-200 mt-0.5 inline-block">Debe: ${formatCOP(pending)}</div>` : `<div class="text-slate-400 text-[10px]">Deuda: $0</div>`}
+                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
+                            <div class="font-bold text-slate-900 text-[11px]">Tot: ${formatCOP(total)}</div>
+                            <div class="text-emerald-600 text-[10px]">Pag: ${formatCOP(paid)}</div>
+                            ${pending > 0 ? `<div class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded border border-rose-200 mt-0.5 inline-block text-[10px]">Debe: ${formatCOP(pending)}</div>` : `<div class="text-slate-400 text-[9px]">Deuda: $0</div>`}
                         </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap text-xs">
-                            ${g.bookingCommission > 0 ? `<span class="text-rose-600 font-medium">-${formatCOP(g.bookingCommission)}</span>` : `<span class="text-slate-300">$0</span>`}
+                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
+                            ${g.bookingCommission > 0 ? `<span class="text-rose-600 font-medium text-[11px]">-${formatCOP(g.bookingCommission)}</span>` : `<span class="text-slate-300 text-[11px]">$0</span>`}
                         </td>
-                        <td class="py-3 px-4 text-right whitespace-nowrap text-xs">
+                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
                             ${cleaningCell}
                         </td>
-                        <td class="py-3 px-4 text-right font-bold text-brand-700 whitespace-nowrap">
+                        <td class="py-2 px-1.5 text-right font-bold text-brand-700 whitespace-nowrap text-[11px]">
                             ${formatCOP(netApprox)}
                         </td>
-                        <td class="py-3 px-4 text-center whitespace-nowrap">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="editGuest('${g.id}')" class="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Editar / Actualizar Pago">
-                                    <i class="fa-solid fa-pen-to-square text-sm"></i>
+                        <td class="py-2 px-1.5 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-0.5">
+                                <button onclick="editGuest('${g.id}')" class="p-1 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded transition-all" title="Editar / Actualizar Pago">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
-                                <button onclick="confirmDelete('${g.id}')" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Eliminar">
-                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                <button onclick="confirmDelete('${g.id}')" class="p-1 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition-all" title="Eliminar">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>
                         </td>
@@ -890,20 +881,17 @@
             const periodsSet = new Set();
             const currentYear = new Date().getFullYear();
 
-            // Always add all months of current year
             for (let m = 1; m <= 12; m++) {
                 const mStr = m < 10 ? '0' + m : '' + m;
                 periodsSet.add(`${currentYear}-${mStr}`);
             }
 
-            // Add any other YYYY-MM periods present in the guest data
             guests.forEach(g => {
                 if (g.checkIn && g.checkIn.length >= 7) {
                     periodsSet.add(g.checkIn.substring(0, 7));
                 }
             });
 
-            // Sort periods in descending order (newest first)
             const sortedPeriods = Array.from(periodsSet).sort().reverse();
 
             select.innerHTML = '<option value="ALL">Todos los meses y años</option>';
@@ -912,8 +900,8 @@
                 const monthIndex = parseInt(month, 10) - 1;
                 if (monthIndex >= 0 && monthIndex < 12) {
                     const opt = document.createElement('option');
-                    opt.value = period; // Format: "YYYY-MM" e.g., "2026-09"
-                    opt.innerText = `${monthNames[monthIndex]} ${year}`; // e.g., "Septiembre 2026"
+                    opt.value = period;
+                    opt.innerText = `${monthNames[monthIndex]} ${year}`;
                     select.appendChild(opt);
                 }
             });
@@ -934,7 +922,6 @@
             const badge = document.getElementById('recurrent-guest-badge');
             if (badge) badge.classList.add('hidden');
 
-            // Cargar lista de sugerencias de clientes guardados
             updateClientDatalists();
 
             const todayStr = new Date().toISOString().split('T')[0];
@@ -972,7 +959,6 @@
             document.getElementById('modal-guest').classList.remove('hidden');
         }
 
-        // --- Lógica de Autocompletado de Clientes Recurrentes ---
         function updateClientDatalists() {
             const idsList = document.getElementById('existing-ids-list');
             const namesList = document.getElementById('existing-names-list');
@@ -1087,7 +1073,6 @@
                 showToast("Huésped registrado exitosamente.");
             }
 
-            // Sync with Firebase or LocalStorage
             if (isCloudActive && firebaseDb) {
                 firebaseDb.ref('guests/' + newGuest.id).set(newGuest);
             }
@@ -1133,7 +1118,6 @@
                     matchesPayment = (pending <= 0);
                 }
 
-                // Cleaning payment condition: paid if cleaningFee > 0 and cleaningDate is set
                 const cleanVal = parseFloat(g.cleaningFee) || 0;
                 const isCleaningPaid = cleanVal > 0 && g.cleaningDate && g.cleaningDate.trim() !== '';
 
