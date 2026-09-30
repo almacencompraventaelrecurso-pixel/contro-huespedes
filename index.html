@@ -1,1379 +1,530 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Huéspedes - Apartaestudios</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase SDK (Compat Version) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0284c7',
-                            600: '#0369a1',
-                            700: '#075985',
-                        },
-                        booking: '#003580',
-                        airbnb: '#FF5A5F',
-                        direct: '#10B981'
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Huéspedes - Apartaestudios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-brand-500 rounded-xl text-white shadow-lg shadow-brand-500/30">
-                    <i class="fa-solid fa-building-user text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">Control de Huéspedes</h1>
-                    <p class="text-xs text-slate-400">Apartaestudios Amoblados</p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <!-- Cloud Status Indicator Button -->
-                <button onclick="openCloudModal()" id="cloud-status-btn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-3 py-2 rounded-lg text-xs transition-all flex items-center gap-2 border border-slate-700">
-                    <span id="cloud-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                    <span id="cloud-status-text">Modo Local</span>
-                    <i class="fa-solid fa-gear text-slate-400 text-xs"></i>
-                </button>
-
-                <button onclick="openModal()" class="bg-brand-500 hover:bg-brand-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm hover:shadow-md">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Nuevo Registro</span>
-                </button>
-                <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-3.5 py-2 rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm" title="Descargar Excel/CSV">
-                    <i class="fa-solid fa-file-excel"></i>
-                    <span class="hidden md:inline">Exportar Excel</span>
-                </button>
-            </div>
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white shadow-md p-4 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid me-2 fa-building-user text-2xl text-indigo-200"></i>
+        <h1 class="text-xl font-bold tracking-tight">Control de Huéspedes</h1>
+      </div>
+      
+      <!-- Filtros principales -->
+      <div class="flex flex-wrap items-center gap-2 text-sm">
+        <div>
+          <label class="text-indigo-200 text-xs block">Mes / Año Reporte</label>
+          <input type="month" id="filter-month" class="bg-indigo-800 text-white rounded px-2 py-1 text-xs border border-indigo-500 focus:outline-none">
         </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
-
-        <!-- Cloud Sync Notification Banner -->
-        <div id="cloud-banner" class="mb-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-4 border border-indigo-700/50">
-            <div class="flex items-center gap-3.5">
-                <div class="p-3 bg-indigo-500/20 rounded-xl border border-indigo-400/30 text-indigo-300 text-xl">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-sm text-indigo-100">Sincronización Multidispositivo (Nube)</h3>
-                    <p class="text-xs text-indigo-200/80">Conecta tu aplicación a Google Firebase para compartir información al instante en otros celulares o computadores.</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="openCloudModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-sm">
-                    Configurar Nube
-                </button>
-                <button onclick="dismissBanner()" class="text-indigo-300 hover:text-white p-1 text-xs">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
+        <div>
+          <label class="text-indigo-200 text-xs block">Estado Pago</label>
+          <select id="filter-payment" class="bg-indigo-800 text-white rounded px-2 py-1 text-xs border border-indigo-500 focus:outline-none">
+            <option value="todos">Todos</option>
+            <option value="deben">Con Saldo Pendiente</option>
+            <option value="pagado">Pagado</option>
+            <option value="parcial">Pago Parcial</option>
+          </select>
         </div>
+        <button id="btn-reset-filters" class="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded text-xs transition">
+          Ver Todo
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
-            <!-- Metric 1: Total Noches -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Noches Totales</span>
-                    <i class="fa-solid fa-moon text-indigo-500"></i>
-                </div>
-                <div id="kpi-nights" class="text-xl font-extrabold text-slate-800">0</div>
-                <div id="kpi-reservations" class="text-[11px] text-slate-500 mt-0.5">0 reservas</div>
-            </div>
-
-            <!-- Metric 2: Cobro Bruto Total -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Valor Total</span>
-                    <i class="fa-solid fa-hand-holding-dollar text-emerald-500"></i>
-                </div>
-                <div id="kpi-gross" class="text-xl font-extrabold text-slate-800">$0</div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Costo estadías</div>
-            </div>
-
-            <!-- Metric 3: Por Cobrar (Saldos Pendientes) -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-amber-200 bg-amber-50/30">
-                <div class="flex items-center justify-between text-amber-700 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Por Cobrar</span>
-                    <i class="fa-solid fa-circle-exclamation text-amber-500"></i>
-                </div>
-                <div id="kpi-pending" class="text-xl font-extrabold text-amber-600">$0</div>
-                <div id="kpi-pending-count" class="text-[11px] text-amber-700 mt-0.5">0 deudas pendientes</div>
-            </div>
-
-            <!-- Metric 4: Comisiones Booking -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Comisión Booking</span>
-                    <i class="fa-solid fa-percent text-blue-600"></i>
-                </div>
-                <div id="kpi-commission" class="text-xl font-extrabold text-rose-600">$0</div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Gastos plataforma</div>
-            </div>
-
-            <!-- Metric 5: Gastos de Aseo -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Gastos Aseo</span>
-                    <i class="fa-solid fa-broom text-amber-500"></i>
-                </div>
-                <div id="kpi-cleaning" class="text-xl font-extrabold text-amber-600">$0</div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Pago a personal</div>
-            </div>
-
-            <!-- Metric 6: Ingreso Neto -->
-            <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 col-span-2 sm:col-span-1">
-                <div class="flex items-center justify-between text-slate-500 text-[11px] font-semibold uppercase tracking-wider mb-1">
-                    <span>Ingreso Neto</span>
-                    <i class="fa-solid fa-wallet text-brand-600"></i>
-                </div>
-                <div id="kpi-net" class="text-xl font-extrabold text-brand-600">$0</div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Ganancia limpia</div>
-            </div>
-        </section>
-
-        <section class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <!-- Search input -->
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
-                    </span>
-                    <input type="text" id="filter-search" oninput="applyFilters()" placeholder="Buscar cliente, cédula..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
-                </div>
-
-                <!-- Platform Filter -->
-                <div>
-                    <select id="filter-channel" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
-                        <option value="ALL">Todas las plataformas</option>
-                        <option value="Booking">Booking.com</option>
-                        <option value="Airbnb">Airbnb</option>
-                        <option value="Cliente Directo">Cliente Directo</option>
-                    </select>
-                </div>
-
-                <!-- Apartment Filter -->
-                <div>
-                    <select id="filter-apartment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
-                        <option value="ALL">Todos los apartaestudios</option>
-                    </select>
-                </div>
-
-                <!-- Month / Year Filter -->
-                <div>
-                    <select id="filter-month" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700">
-                        <option value="ALL">Todos los meses y años</option>
-                    </select>
-                </div>
-
-                <!-- Unpaid / Payment Status Filter -->
-                <div>
-                    <select id="filter-payment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
-                        <option value="ALL">Todos los estados de pago</option>
-                        <option value="PENDING" class="text-amber-600 font-bold">⚠️ Con Saldo Pendiente / Deben</option>
-                        <option value="PAID" class="text-emerald-600 font-bold">✅ Totalmente Pagados</option>
-                    </select>
-                </div>
-
-                <!-- Cleaning Status Filter -->
-                <div>
-                    <select id="filter-cleaning" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
-                        <option value="ALL">Todos los estados de aseo</option>
-                        <option value="PENDING" class="text-amber-600 font-bold">🧹 Aseo Pendiente / Por liquidar</option>
-                        <option value="PAID" class="text-emerald-600 font-bold">✅ Aseo Pagado</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="mt-3 flex justify-end">
-                <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 px-4 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5">
-                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
-                    <span>Limpiar Filtros</span>
-                </button>
-            </div>
-        </section>
-
-        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <div class="flex items-center gap-2">
-                    <h2 class="font-bold text-slate-800">Listado de Huéspedes Registrados</h2>
-                    <span id="record-count-badge" class="bg-brand-100 text-brand-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">0 registros</span>
-                </div>
-            </div>
-
-            <div class="w-full overflow-x-auto lg:overflow-x-visible">
-                <table class="w-full text-left text-xs border-collapse table-auto">
-                    <thead>
-                        <tr class="bg-slate-100/80 text-slate-600 font-semibold text-[11px] uppercase tracking-wider border-b border-slate-200">
-                            <th class="py-2.5 px-2">Cliente / Cédula</th>
-                            <th class="py-2.5 px-1.5">Estado</th>
-                            <th class="py-2.5 px-1.5">Apto</th>
-                            <th class="py-2.5 px-1.5">Fechas</th>
-                            <th class="py-2.5 px-1.5 text-center">Noches</th>
-                            <th class="py-2.5 px-1.5">Canal</th>
-                            <th class="py-2.5 px-1.5 text-right">Cobro / Pago / Deuda</th>
-                            <th class="py-2.5 px-1.5 text-right">Comisión</th>
-                            <th class="py-2.5 px-1.5 text-right">Aseo</th>
-                            <th class="py-2.5 px-1.5 text-right">Neto</th>
-                            <th class="py-2.5 px-1.5 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="guests-table-body" class="divide-y divide-slate-200">
-                        <!-- Rows rendered dynamically via JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Empty State -->
-            <div id="empty-state" class="hidden p-12 text-center">
-                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
-                    <i class="fa-solid fa-folder-open text-2xl"></i>
-                </div>
-                <h3 class="text-slate-700 font-semibold mb-1">No hay huéspedes registrados</h3>
-                <p class="text-slate-500 text-xs max-w-sm mx-auto mb-4">Haz clic en "Nuevo Registro" para empezar a llevar el control de tus apartaestudios.</p>
-                <button onclick="openModal()" class="bg-brand-500 text-white px-4 py-2 rounded-lg text-xs font-semibold hover:bg-brand-600 inline-flex items-center gap-1.5">
-                    <i class="fa-solid fa-plus"></i> Registrar Primer Huésped
-                </button>
-            </div>
-        </section>
-    </main>
-
-    <div id="modal-guest" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
-            
-            <!-- Modal Header -->
-            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center rounded-t-2xl">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-user-plus text-brand-400"></i>
-                    <h3 id="modal-title" class="font-bold text-base">Registrar Nuevo Huésped</h3>
-                </div>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 rounded-lg transition-all">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <!-- Modal Form Body -->
-            <form id="form-guest" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
-                <input type="hidden" id="guest-id">
-
-                <!-- Sección: Datos del Cliente -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-id-card text-brand-500"></i> Información del Cliente
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Nº Cédula / Documento *</label>
-                            <input type="text" id="client-id" required placeholder="Ej: 1020304050" list="existing-ids-list" oninput="autofillClientById()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <datalist id="existing-ids-list"></datalist>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Nombre Completo del Cliente *</label>
-                            <input type="text" id="client-name" required placeholder="Ej: Juan Carlos Pérez" list="existing-names-list" oninput="autofillClientByName()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <datalist id="existing-names-list"></datalist>
-                        </div>
-                    </div>
-
-                    <!-- Banner de notificación cuando detecta un cliente recurrente -->
-                    <div id="recurrent-guest-badge" class="hidden text-xs text-emerald-700 bg-emerald-100/80 border border-emerald-300 p-2.5 rounded-lg flex items-center justify-between font-medium">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-user-check text-emerald-600 text-sm"></i>
-                            <span><strong>¡Cliente recurrente detectado!</strong> Datos autocompletados desde el historial.</span>
-                        </div>
-                        <span class="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">Recurrente</span>
-                    </div>
-                </div>
-
-                <!-- Sección: Hospedaje & Fechas -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-door-open text-brand-500"></i> Detalles de la Estancia
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Apartaestudio *</label>
-                            <input type="text" id="apartment-number" required placeholder="Ej: Apt 101, Apt 202" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Ingreso *</label>
-                            <input type="date" id="check-in-date" required onchange="calculateNights()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Salida *</label>
-                            <input type="date" id="check-out-date" required onchange="calculateNights()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Visual banner for automatic nights calculation -->
-                    <div class="bg-brand-50 border border-brand-200 p-3 rounded-lg flex justify-between items-center mb-3">
-                        <div class="flex items-center gap-2 text-brand-700 text-xs font-medium">
-                            <i class="fa-solid fa-circle-info text-brand-500"></i>
-                            <span>Noches calculadas automáticamente (excluye día de salida):</span>
-                        </div>
-                        <span id="calculated-nights-badge" class="font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200">0 Noches</span>
-                    </div>
-
-                    <!-- Pregunta Especial de Asignación de Mes si la reserva cruza de un mes a otro -->
-                    <div id="cross-month-container" class="hidden bg-amber-50 border border-amber-300 p-3.5 rounded-xl space-y-2">
-                        <div class="flex items-start gap-2.5 text-amber-900 text-xs font-semibold">
-                            <i class="fa-solid fa-calendar-week text-amber-600 text-base mt-0.5"></i>
-                            <div>
-                                <div>Estancia entre dos meses detectada</div>
-                                <p class="text-[11px] font-normal text-amber-700 leading-tight mt-0.5">
-                                    El cliente ingresa en un mes y sale en otro. ¿En qué mes deseas asignar este registro para tus reportes e ingresos?
-                                </p>
-                            </div>
-                        </div>
-                        <div class="pt-1">
-                            <select id="assigned-month-select" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                                <!-- Dynamic Options Populated via JS -->
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sección: Canal y Valores Financieros -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-diagram-project text-brand-500"></i> Canal y Registro de Pagos
-                    </h4>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Plataforma / Canal *</label>
-                            <select id="channel-type" onchange="toggleCommissionField()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                                <option value="Booking">Booking.com</option>
-                                <option value="Airbnb">Airbnb</option>
-                                <option value="Cliente Directo">Cliente Directo</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">
-                                Comisión Booking ($) 
-                                <span id="commission-label-info" class="text-[10px] text-slate-400">(Booking)</span>
-                            </label>
-                            <input type="number" id="booking-commission" min="0" step="any" placeholder="0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Abonos y Control de Deuda -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded-lg border border-slate-200 mb-2">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 mb-1">Valor Total Estadía Completa ($) *</label>
-                            <input type="number" id="total-price" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 300000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <span class="text-[10px] text-slate-400">Suma total de todas las noches</span>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-800 mb-1">Monto Pagado / Abonado ($) *</label>
-                            <input type="number" id="paid-amount" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 100000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-emerald-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <span class="text-[10px] text-slate-400">Lo que el cliente te ha entregado</span>
-                        </div>
-                    </div>
-
-                    <!-- Interactive Balance Indicator -->
-                    <div id="balance-banner" class="p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-emerald-50 text-emerald-800 border-emerald-200">
-                        <span id="balance-status-text"><i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Reserva totalmente pagada</span>
-                        <span id="balance-amount-text" class="font-bold">Saldo Pendiente: $0</span>
-                    </div>
-                </div>
-
-                <!-- Sección: Control de Aseo -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-broom text-brand-500"></i> Registro de Aseo
-                        </h4>
-                        <span class="text-[11px] text-slate-500 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium">
-                            <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>Se define al terminar la estadía
-                        </span>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Valor del Aseo ($) <span class="text-slate-400 font-normal">(Opcional)</span></label>
-                            <input type="number" id="cleaning-fee" min="0" step="any" placeholder="Ej: 40000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Fecha de Pago del Aseo <span class="text-slate-400 font-normal">(Opcional)</span></label>
-                            <input type="date" id="cleaning-payment-date" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-100 transition-all">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        <span>Guardar Huésped</span>
-                    </button>
-                </div>
-            </form>
-        </div>
+  <!-- Dashboard Principal -->
+  <main class="max-w-7xl mx-auto w-full p-4 flex-1 flex flex-col gap-4">
+    
+    <!-- Métricas Rápidas (5 tarjetas) -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-indigo-500">
+        <p class="text-[11px] text-slate-500 font-medium">Ingresos Estadías</p>
+        <p id="stat-total" class="text-base font-bold text-slate-800">$0</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-emerald-500">
+        <p class="text-[11px] text-slate-500 font-medium">Cobrado / Recibido</p>
+        <p id="stat-paid" class="text-base font-bold text-emerald-600">$0</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-rose-500">
+        <p class="text-[11px] text-slate-500 font-medium">Por Cobrar (Deuda)</p>
+        <p id="stat-pending" class="text-base font-bold text-rose-600">$0</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500">
+        <p class="text-[11px] text-slate-500 font-medium">Aseos Pagados (Mes)</p>
+        <p id="stat-cleaning" class="text-base font-bold text-purple-600">$0</p>
+      </div>
+      <div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-amber-500">
+        <p class="text-[11px] text-slate-500 font-medium">Total Noches</p>
+        <p id="stat-nights" class="text-base font-bold text-amber-600">0 Noches</p>
+      </div>
     </div>
 
-    <!-- Modal Form for Firebase Cloud Database Configuration -->
-    <div id="modal-cloud" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
-            <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-cloud text-indigo-400"></i>
-                    <h3 class="font-bold text-base">Conectar Base de Datos en la Nube</h3>
-                </div>
-                <button onclick="closeCloudModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+    <!-- Barra de Acciones -->
+    <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+      <div class="relative w-64">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+        <input type="text" id="search-input" placeholder="Buscar por cliente o C.C..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500">
+      </div>
+      <div class="flex gap-2">
+        <button id="btn-export-excel" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
+          <i class="fa-solid fa-file-excel"></i> Exportar Excel
+        </button>
+        <button id="btn-open-modal" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1.5 rounded-md font-medium transition flex items-center gap-1">
+          <i class="fa-solid fa-plus"></i> Nuevo Registro
+        </button>
+      </div>
+    </div>
 
-            <div class="p-6 space-y-4 text-xs text-slate-600">
-                <p class="leading-relaxed">
-                    Al conectar Firebase, cualquier cambio que hagas se reflejará al instante en todos los dispositivos conectados al mismo enlace web.
-                </p>
+    <!-- Tabla Compacta -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex-1">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+          <tr>
+            <th class="py-2.5 px-2">Huésped</th>
+            <th class="py-2.5 px-1.5 text-center">Apto</th>
+            <th class="py-2.5 px-1.5">Fechas</th>
+            <th class="py-2.5 px-1.5 text-center">Noches</th>
+            <th class="py-2.5 px-1.5">Canal</th>
+            <th class="py-2.5 px-1.5">Cuentas (Total / Pago / Deuda)</th>
+            <th class="py-2.5 px-1.5 text-center">Aseo (Valor / Mes Pago)</th>
+            <th class="py-2.5 px-1.5 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="guest-table-body" class="divide-y divide-slate-100 text-slate-700">
+          <!-- Filas dinámicas -->
+        </tbody>
+      </table>
+    </div>
+  </main>
 
-                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-3">
-                    <div>
-                        <label class="block font-semibold text-slate-800 mb-1">Database URL de Firebase *</label>
-                        <input type="text" id="cfg-database-url" placeholder="https://tu-proyecto-rtdb.firebaseio.com" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-800 mb-1">API Key de Firebase *</label>
-                        <input type="text" id="cfg-api-key" placeholder="AIzaSyA..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-slate-800 mb-1">Project ID</label>
-                        <input type="text" id="cfg-project-id" placeholder="mi-proyecto-12345" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                    </div>
-                </div>
+  <!-- Modal Formulario -->
+  <div id="modal-guest" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="bg-indigo-700 text-white p-4 flex justify-between items-center">
+        <h2 id="modal-title" class="font-bold text-sm">Nuevo Registro de Huésped</h2>
+        <button id="btn-close-modal" class="text-indigo-200 hover:text-white text-lg">&times;</button>
+      </div>
 
-                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-[11px] text-amber-800">
-                    <i class="fa-solid fa-circle-info text-amber-600 mr-1"></i>
-                    Obtén estas credenciales gratis en <strong>console.firebase.google.com</strong> activando <strong>Realtime Database</strong> en modo de prueba.
-                </div>
+      <form id="form-guest" class="p-4 overflow-y-auto space-y-3 text-xs">
+        <input type="hidden" id="guest-id">
 
-                <div class="flex justify-between items-center pt-2">
-                    <button type="button" onclick="disconnectCloud()" id="btn-disconnect-cloud" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-lg font-medium transition-all hidden">
-                        Desconectar Nube
-                    </button>
-                    <div class="flex gap-2 ml-auto">
-                        <button type="button" onclick="closeCloudModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-100">
-                            Cancelar
-                        </button>
-                        <button type="button" onclick="saveCloudConfig()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-sm transition-all flex items-center gap-1.5">
-                            <i class="fa-solid fa-plug"></i> Guardar y Conectar
-                        </button>
-                    </div>
-                </div>
-            </div>
+        <!-- Cédula y Autocompletado -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-medium text-slate-700">Cédula / Documento</label>
+            <input type="text" id="doc-number" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="font-medium text-slate-700">Nombre Completo</label>
+            <input type="text" id="guest-name" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
         </div>
-    </div>
 
-    <!-- Custom Delete Confirmation Modal -->
-    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl text-center">
-            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-            </div>
-            <h3 class="text-base font-bold text-slate-800 mb-1">¿Eliminar este registro?</h3>
-            <p class="text-xs text-slate-500 mb-6">Esta acción no se puede deshacer y el registro del huésped será borrado permanentemente.</p>
-            <div class="flex justify-center gap-3">
-                <button onclick="closeConfirmModal()" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-200">
-                    Cancelar
-                </button>
-                <button id="btn-confirm-delete" class="px-4 py-2 bg-rose-600 text-white rounded-lg text-xs font-semibold hover:bg-rose-700 shadow-sm">
-                    Sí, Eliminar
-                </button>
-            </div>
+        <!-- Apto y Canal -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-medium text-slate-700">Apartaestudio</label>
+            <input type="text" id="apto-number" placeholder="Ej: 301" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="font-medium text-slate-700">Canal de Reserva</label>
+            <select id="channel" class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+              <option value="Cliente Directo">Cliente Directo</option>
+              <option value="Booking">Booking</option>
+              <option value="Airbnb">Airbnb</option>
+            </select>
+          </div>
         </div>
+
+        <!-- Fechas -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-medium text-slate-700">Fecha Ingreso</label>
+            <input type="date" id="check-in" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="font-medium text-slate-700">Fecha Salida</label>
+            <input type="date" id="check-out" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Extensión de Estadía -->
+        <div class="bg-amber-50 border border-amber-200 rounded p-2 flex items-center justify-between">
+          <label for="is-extension" class="font-semibold text-amber-900 cursor-pointer flex items-center gap-2">
+            <input type="checkbox" id="is-extension" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500">
+            ¿Es extensión de estadía previa?
+          </label>
+          <span class="text-[10px] text-amber-700">(Pone Aseo en $0)</span>
+        </div>
+
+        <!-- Alerta Dinámica Cambio de Mes -->
+        <div id="month-conflict-box" class="hidden bg-indigo-50 border border-indigo-200 p-2.5 rounded-lg text-indigo-900 text-xs">
+          <p class="font-semibold mb-1"><i class="fa-solid fa-calendar-days text-indigo-600"></i> Reserva cruza entre dos meses:</p>
+          <p class="text-[11px] text-indigo-700 mb-1.5">¿A qué mes deseas asignar este ingreso de estadía?</p>
+          <select id="assigned-month" class="w-full border border-indigo-300 rounded p-1 text-xs bg-white focus:outline-none">
+            <!-- Opciones dinámicas -->
+          </select>
+        </div>
+
+        <!-- Valores Financieros -->
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div>
+            <label class="font-medium text-slate-700">Valor Total Estadía ($)</label>
+            <input type="number" id="total-price" min="0" placeholder="0" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="font-medium text-slate-700">Monto Pagado / Abonado ($)</label>
+            <input type="number" id="paid-amount" min="0" placeholder="0" required class="w-full border border-slate-300 rounded p-1.5 mt-1 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Sección de Aseo (Con Mes de Pago independiente) -->
+        <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+          <p class="font-semibold text-slate-700 text-[11px]"><i class="fa-solid fa-broom text-purple-600"></i> Control de Aseo</p>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="font-medium text-slate-600 text-[10px]">Cobro Aseo ($)</label>
+              <input type="number" id="cleaning-fee" min="0" value="0" class="w-full border border-slate-300 rounded p-1 text-xs focus:outline-none">
+            </div>
+            <div>
+              <label class="font-medium text-slate-600 text-[10px]">Estado Aseo</label>
+              <select id="cleaning-status" class="w-full border border-slate-300 rounded p-1 text-xs focus:outline-none">
+                <option value="Pagado">Pagado</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="No Aplica">No Aplica ($0)</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-medium text-slate-600 text-[10px]">Mes Pago Aseo</label>
+              <input type="month" id="cleaning-month" class="w-full border border-slate-300 rounded p-1 text-xs focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen de Saldo -->
+        <div id="balance-summary" class="bg-slate-50 p-2 rounded text-center font-semibold text-slate-700">
+          Saldo Pendiente: <span id="pending-balance-text" class="text-emerald-600">$0</span>
+        </div>
+
+        <!-- Botones -->
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+          <button type="button" id="btn-cancel" class="px-4 py-1.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white font-medium">Guardar Registro</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <!-- Toast Notification Banner -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-all transform translate-y-20 opacity-0 z-50">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-message" class="text-xs font-medium">Operación realizada con éxito</span>
-    </div>
+  <script>
+    let guests = JSON.parse(localStorage.getItem('guests_data')) || [];
 
-    <script>
-        let guests = [];
-        let deleteTargetId = null;
-        let firebaseDb = null;
-        let isCloudActive = false;
+    const modal = document.getElementById('modal-guest');
+    const form = document.getElementById('form-guest');
+    const checkInInput = document.getElementById('check-in');
+    const checkOutInput = document.getElementById('check-out');
+    const isExtensionCheckbox = document.getElementById('is-extension');
+    const cleaningFeeInput = document.getElementById('cleaning-fee');
+    const cleaningStatusSelect = document.getElementById('cleaning-status');
+    const cleaningMonthInput = document.getElementById('cleaning-month');
+    const monthConflictBox = document.getElementById('month-conflict-box');
+    const assignedMonthSelect = document.getElementById('assigned-month');
+    const totalPriceInput = document.getElementById('total-price');
+    const paidAmountInput = document.getElementById('paid-amount');
+    const pendingText = document.getElementById('pending-balance-text');
 
-        const monthNames = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
+    document.addEventListener('DOMContentLoaded', () => {
+      renderUI();
+      setupEventListeners();
+    });
 
-        // --- Firebase Cloud Sync Logic ---
-        function initFirebase() {
-            const savedConfig = localStorage.getItem('apartaestudios_firebase_config');
-            if (!savedConfig) {
-                updateSyncUI(false);
-                return;
-            }
+    function setupEventListeners() {
+      document.getElementById('btn-open-modal').addEventListener('click', () => openModal());
+      document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+      document.getElementById('btn-cancel').addEventListener('click', closeModal);
 
-            try {
-                const config = JSON.parse(savedConfig);
-                if (!config.databaseURL || !config.apiKey) {
-                    updateSyncUI(false);
-                    return;
-                }
+      checkInInput.addEventListener('change', handleDateChange);
+      checkOutInput.addEventListener('change', handleDateChange);
+      
+      totalPriceInput.addEventListener('input', calculateBalance);
+      paidAmountInput.addEventListener('input', calculateBalance);
 
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(config);
-                }
-                
-                firebaseDb = firebase.database();
-                isCloudActive = true;
-                updateSyncUI(true);
+      isExtensionCheckbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          cleaningFeeInput.value = 0;
+          cleaningFeeInput.disabled = true;
+          cleaningStatusSelect.value = "No Aplica";
+        } else {
+          cleaningFeeInput.disabled = false;
+        }
+      });
 
-                // Real-time synchronization listener
-                firebaseDb.ref('guests').on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    if (data) {
-                        guests = Object.values(data);
-                    } else {
-                        guests = [];
-                    }
-                    saveToLocalStorage(false);
-                    applyFilters();
-                }, (error) => {
-                    console.error("Firebase sync error:", error);
-                    showToast("Error de conexión con la nube. Usando datos locales.", "error");
-                    updateSyncUI(false);
-                });
+      document.getElementById('filter-month').addEventListener('change', renderUI);
+      document.getElementById('filter-payment').addEventListener('change', renderUI);
+      document.getElementById('search-input').addEventListener('input', renderUI);
+      document.getElementById('btn-reset-filters').addEventListener('click', () => {
+        document.getElementById('filter-month').value = '';
+        document.getElementById('filter-payment').value = 'todos';
+        document.getElementById('search-input').value = '';
+        renderUI();
+      });
 
-            } catch (err) {
-                console.error("Firebase config error:", err);
-                updateSyncUI(false);
-            }
+      document.getElementById('btn-export-excel').addEventListener('click', exportToCSV);
+      form.addEventListener('submit', handleFormSubmit);
+    }
+
+    function handleDateChange() {
+      const inVal = checkInInput.value;
+      const outVal = checkOutInput.value;
+
+      if (!inVal) return;
+
+      // Autocompletar mes de pago de aseo si está vacío
+      if (!cleaningMonthInput.value) {
+        cleaningMonthInput.value = inVal.slice(0, 7);
+      }
+
+      if (!outVal) return;
+
+      const dIn = new Date(inVal);
+      const dOut = new Date(outVal);
+
+      if (dIn.getMonth() !== dOut.getMonth() || dIn.getFullYear() !== dOut.getFullYear()) {
+        const mInStr = inVal.slice(0, 7);
+        const mOutStr = outVal.slice(0, 7);
+
+        assignedMonthSelect.innerHTML = `
+          <option value="${mInStr}">${formatMonthLabel(mInStr)} (Mes Ingreso)</option>
+          <option value="${mOutStr}">${formatMonthLabel(mOutStr)} (Mes Salida)</option>
+        `;
+        monthConflictBox.classList.remove('hidden');
+      } else {
+        monthConflictBox.classList.add('hidden');
+      }
+    }
+
+    function formatMonthLabel(yyyyMm) {
+      const [y, m] = yyyyMm.split('-');
+      const date = new Date(y, parseInt(m) - 1, 1);
+      return date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+    }
+
+    function calculateBalance() {
+      const total = parseFloat(totalPriceInput.value) || 0;
+      const paid = parseFloat(paidAmountInput.value) || 0;
+      const pending = total - paid;
+
+      if (pending > 0) {
+        pendingText.textContent = `$${pending.toLocaleString('es-CO')}`;
+        pendingText.className = "text-rose-600 font-bold";
+      } else {
+        pendingText.textContent = "$0 (Al día)";
+        pendingText.className = "text-emerald-600 font-bold";
+      }
+    }
+
+    function openModal(data = null) {
+      form.reset();
+      cleaningFeeInput.disabled = false;
+      monthConflictBox.classList.add('hidden');
+
+      if (data) {
+        document.getElementById('modal-title').textContent = "Editar Registro";
+        document.getElementById('guest-id').value = data.id;
+        document.getElementById('doc-number').value = data.doc;
+        document.getElementById('guest-name').value = data.name;
+        document.getElementById('apto-number').value = data.apto;
+        document.getElementById('channel').value = data.channel;
+        checkInInput.value = data.checkIn;
+        checkOutInput.value = data.checkOut;
+        totalPriceInput.value = data.total;
+        paidAmountInput.value = data.paid;
+        cleaningFeeInput.value = data.cleaningFee;
+        cleaningStatusSelect.value = data.cleaningStatus;
+        cleaningMonthInput.value = data.cleaningMonth || data.checkIn.slice(0, 7);
+        isExtensionCheckbox.checked = data.isExtension || false;
+        
+        if (data.isExtension) {
+          cleaningFeeInput.disabled = true;
         }
 
-        function updateSyncUI(connected) {
-            const dot = document.getElementById('cloud-status-dot');
-            const text = document.getElementById('cloud-status-text');
-            const banner = document.getElementById('cloud-banner');
-            const disconnectBtn = document.getElementById('btn-disconnect-cloud');
+        handleDateChange();
+        if (data.assignedMonth) assignedMonthSelect.value = data.assignedMonth;
+      } else {
+        document.getElementById('modal-title').textContent = "Nuevo Registro de Huésped";
+        document.getElementById('guest-id').value = '';
+      }
 
-            if (connected) {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50";
-                text.innerText = "Nube Activa";
-                if (banner) banner.classList.add('hidden');
-                if (disconnectBtn) disconnectBtn.classList.remove('hidden');
-            } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
-                text.innerText = "Modo Local";
-                if (disconnectBtn) disconnectBtn.classList.add('hidden');
-            }
+      calculateBalance();
+      modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      modal.classList.add('hidden');
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const id = document.getElementById('guest-id').value || Date.now().toString();
+      const checkIn = checkInInput.value;
+      const checkOut = checkOutInput.value;
+
+      const diffTime = Math.abs(new Date(checkOut) - new Date(checkIn));
+      const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+
+      let assignedMonth = checkIn.slice(0, 7);
+      if (!monthConflictBox.classList.contains('hidden')) {
+        assignedMonth = assignedMonthSelect.value;
+      }
+
+      const record = {
+        id,
+        doc: document.getElementById('doc-number').value,
+        name: document.getElementById('guest-name').value,
+        apto: document.getElementById('apto-number').value,
+        channel: document.getElementById('channel').value,
+        checkIn,
+        checkOut,
+        nights,
+        assignedMonth,
+        total: parseFloat(totalPriceInput.value) || 0,
+        paid: parseFloat(paidAmountInput.value) || 0,
+        cleaningFee: parseFloat(cleaningFeeInput.value) || 0,
+        cleaningStatus: cleaningStatusSelect.value,
+        cleaningMonth: cleaningMonthInput.value || assignedMonth,
+        isExtension: isExtensionCheckbox.checked
+      };
+
+      const index = guests.findIndex(g => g.id === id);
+      if (index >= 0) guests[index] = record;
+      else guests.push(record);
+
+      localStorage.setItem('guests_data', JSON.stringify(guests));
+      closeModal();
+      renderUI();
+    }
+
+    function renderUI() {
+      const monthFilter = document.getElementById('filter-month').value;
+      const paymentFilter = document.getElementById('filter-payment').value;
+      const searchFilter = document.getElementById('search-input').value.toLowerCase();
+
+      const tbody = document.getElementById('guest-table-body');
+      tbody.innerHTML = '';
+
+      let totIngreso = 0, totPagado = 0, totDeuda = 0, totNoches = 0, totAseosMes = 0;
+
+      // Calcular total de aseos del mes seleccionado independientemente de la estancia
+      guests.forEach(g => {
+        if (!monthFilter || g.cleaningMonth === monthFilter) {
+          totAseosMes += g.cleaningFee;
+        }
+      });
+
+      const filtered = guests.filter(g => {
+        if (monthFilter && g.assignedMonth !== monthFilter) return false;
+
+        const deuda = g.total - g.paid;
+        if (paymentFilter === 'deben' && deuda <= 0) return false;
+        if (paymentFilter === 'pagado' && deuda > 0) return false;
+        if (paymentFilter === 'parcial' && (g.paid === 0 || deuda <= 0)) return false;
+
+        if (searchFilter) {
+          const matchName = g.name.toLowerCase().includes(searchFilter);
+          const matchDoc = g.doc.toLowerCase().includes(searchFilter);
+          if (!matchName && !matchDoc) return false;
         }
 
-        function openCloudModal() {
-            const savedConfig = localStorage.getItem('apartaestudios_firebase_config');
-            if (savedConfig) {
-                try {
-                    const cfg = JSON.parse(savedConfig);
-                    document.getElementById('cfg-database-url').value = cfg.databaseURL || '';
-                    document.getElementById('cfg-api-key').value = cfg.apiKey || '';
-                    document.getElementById('cfg-project-id').value = cfg.projectId || '';
-                } catch(e){}
-            }
-            document.getElementById('modal-cloud').classList.remove('hidden');
-        }
-
-        function closeCloudModal() {
-            document.getElementById('modal-cloud').classList.add('hidden');
-        }
-
-        function saveCloudConfig() {
-            const dbUrl = document.getElementById('cfg-database-url').value.trim();
-            const apiKey = document.getElementById('cfg-api-key').value.trim();
-            const projId = document.getElementById('cfg-project-id').value.trim();
-
-            if (!dbUrl || !apiKey) {
-                showToast("Por favor ingresa la Database URL y la API Key.", "error");
-                return;
-            }
-
-            const config = {
-                databaseURL: dbUrl,
-                apiKey: apiKey,
-                projectId: projId || 'apartaestudios-app'
-            };
-
-            localStorage.setItem('apartaestudios_firebase_config', JSON.stringify(config));
-            closeCloudModal();
-            showToast("Configuración guardada. Conectando a la nube...");
-            setTimeout(() => { window.location.reload(); }, 1200);
-        }
-
-        function disconnectCloud() {
-            localStorage.removeItem('apartaestudios_firebase_config');
-            closeCloudModal();
-            showToast("Sincronización deshabilitada. Modo local activo.");
-            setTimeout(() => { window.location.reload(); }, 1200);
-        }
-
-        function dismissBanner() {
-            document.getElementById('cloud-banner').classList.add('hidden');
-        }
-
-        function calculateNightsBetween(startDateStr, endDateStr) {
-            if (!startDateStr || !endDateStr) return 0;
-            const start = new Date(startDateStr);
-            const end = new Date(endDateStr);
-            
-            const diffTime = end.getTime() - start.getTime();
-            if (isNaN(diffTime) || diffTime <= 0) return 0;
-            
-            return Math.ceil(diffTime / (1000 * 3600 * 24));
-        }
-
-        function getFormattedMonthLabel(yearMonthStr) {
-            if (!yearMonthStr || !yearMonthStr.includes('-')) return yearMonthStr;
-            const [year, month] = yearMonthStr.split('-');
-            const monthIdx = parseInt(month, 10) - 1;
-            if (monthIdx >= 0 && monthIdx < 12) {
-                return `${monthNames[monthIdx]} ${year}`;
-            }
-            return yearMonthStr;
-        }
-
-        function calculateNights() {
-            const inDate = document.getElementById('check-in-date').value;
-            const outDate = document.getElementById('check-out-date').value;
-            const badge = document.getElementById('calculated-nights-badge');
-            const crossContainer = document.getElementById('cross-month-container');
-            const assignedSelect = document.getElementById('assigned-month-select');
-            
-            const nights = calculateNightsBetween(inDate, outDate);
-            badge.innerText = `${nights} ${nights === 1 ? 'Noche' : 'Noches'}`;
-            
-            if (nights <= 0 && inDate && outDate) {
-                badge.className = "font-bold text-rose-600 text-sm bg-rose-50 px-2.5 py-1 rounded border border-rose-200";
-                badge.innerText = "Error: Fecha de salida inválida";
-                crossContainer.classList.add('hidden');
-            } else {
-                badge.className = "font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200";
-                
-                // --- Cross Month Detection Logic ---
-                if (inDate && outDate) {
-                    const inMonth = inDate.substring(0, 7);
-                    const outMonth = outDate.substring(0, 7);
-
-                    if (inMonth !== outMonth) {
-                        const previousSelectedVal = assignedSelect.value;
-                        assignedSelect.innerHTML = '';
-
-                        const optIn = document.createElement('option');
-                        optIn.value = inMonth;
-                        optIn.innerText = `Asignar a ${getFormattedMonthLabel(inMonth)} (Mes de Ingreso)`;
-
-                        const optOut = document.createElement('option');
-                        optOut.value = outMonth;
-                        optOut.innerText = `Asignar a ${getFormattedMonthLabel(outMonth)} (Mes de Salida)`;
-
-                        assignedSelect.appendChild(optIn);
-                        assignedSelect.appendChild(optOut);
-
-                        if (previousSelectedVal === outMonth) {
-                            assignedSelect.value = outMonth;
-                        } else {
-                            assignedSelect.value = inMonth;
-                        }
-
-                        crossContainer.classList.remove('hidden');
-                    } else {
-                        crossContainer.classList.add('hidden');
-                    }
-                } else {
-                    crossContainer.classList.add('hidden');
-                }
-            }
-        }
-
-        function calculatePendingBalance() {
-            const total = parseFloat(document.getElementById('total-price').value) || 0;
-            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
-            const pending = Math.max(0, total - paid);
-
-            const banner = document.getElementById('balance-banner');
-            const statusText = document.getElementById('balance-status-text');
-            const amountText = document.getElementById('balance-amount-text');
-
-            amountText.innerText = `Saldo Pendiente: ${formatCOP(pending)}`;
-
-            if (total > 0 && paid < total) {
-                banner.className = "p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-amber-50 text-amber-900 border-amber-300";
-                statusText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i> El huésped queda debiendo ${formatCOP(pending)}`;
-            } else {
-                banner.className = "p-2.5 rounded-lg border text-xs font-medium flex justify-between items-center transition-all bg-emerald-50 text-emerald-800 border-emerald-200";
-                statusText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Totalmente pagado`;
-            }
-        }
-
-        function toggleCommissionField() {
-            const channel = document.getElementById('channel-type').value;
-            const commInput = document.getElementById('booking-commission');
-            const labelInfo = document.getElementById('commission-label-info');
-
-            if (channel === 'Booking') {
-                commInput.disabled = false;
-                commInput.classList.remove('bg-slate-100', 'cursor-not-allowed');
-                labelInfo.innerText = "(Obligatorio/Manual)";
-                labelInfo.className = "text-[10px] text-brand-600 font-semibold";
-            } else {
-                commInput.value = 0;
-                commInput.disabled = true;
-                commInput.classList.add('bg-slate-100', 'cursor-not-allowed');
-                if (channel === 'Airbnb') {
-                    labelInfo.innerText = "(Airbnb la descuenta automáticamente)";
-                } else {
-                    labelInfo.innerText = "(Sin comisión - Cliente Directo)";
-                }
-                labelInfo.className = "text-[10px] text-slate-400";
-            }
-        }
-
-        function formatCOP(amount) {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                maximumFractionDigits: 0
-            }).format(amount || 0);
-        }
-
-        function getGuestAssignedMonth(g) {
-            if (g.assignedMonth) return g.assignedMonth;
-            if (g.checkIn) return g.checkIn.substring(0, 7);
-            return '';
-        }
-
-        function renderUI(dataToRender = guests) {
-            const tableBody = document.getElementById('guests-table-body');
-            const emptyState = document.getElementById('empty-state');
-            const countBadge = document.getElementById('record-count-badge');
-
-            tableBody.innerHTML = '';
-            countBadge.innerText = `${dataToRender.length} ${dataToRender.length === 1 ? 'registro' : 'registros'}`;
-
-            if (dataToRender.length === 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-
-                dataToRender.forEach(g => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50/80 transition-colors border-b border-slate-100 text-slate-700";
-
-                    // Channel badge style
-                    let badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
-                    let iconClass = "fa-solid fa-handshake";
-                    if (g.channel === 'Booking') {
-                        badgeClass = "bg-blue-100 text-blue-800 border-blue-200";
-                        iconClass = "fa-solid fa-b";
-                    } else if (g.channel === 'Airbnb') {
-                        badgeClass = "bg-rose-100 text-rose-800 border-rose-200";
-                        iconClass = "fa-solid fa-house-chimney-window";
-                    }
-
-                    // Balance logic
-                    const total = parseFloat(g.totalPrice) || 0;
-                    const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
-                    const pending = Math.max(0, total - paid);
-
-                    // Payment status badge
-                    let paymentBadge = '';
-                    if (pending <= 0) {
-                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-circle-check text-xs"></i> Pagado</span>`;
-                    } else if (paid > 0) {
-                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-300 font-bold px-2 py-0.5 rounded text-[11px]"><i class="fa-solid fa-triangle-exclamation text-xs text-amber-600"></i> Pago Parcial</span>`;
-                    } else {
-                        paymentBadge = `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 border border-rose-200 font-bold px-2 py-0.5 rounded text-[11px] animate-pulse"><i class="fa-solid fa-clock text-xs"></i> Sin Pagar</span>`;
-                    }
-
-                    // Cleaning cell
-                    const cleaningVal = parseFloat(g.cleaningFee) || 0;
-                    const cleaningCell = cleaningVal > 0 
-                        ? `<div class="text-amber-700 font-semibold text-[11px]">-${formatCOP(cleaningVal)}</div>
-                           <div class="text-[10px] text-slate-400">Pago: ${g.cleaningDate || 'S.D.'}</div>`
-                        : `<span class="inline-block bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
-
-                    // Assigned month indicator if cross-month
-                    const inMonth = g.checkIn ? g.checkIn.substring(0, 7) : '';
-                    const outMonth = g.checkOut ? g.checkOut.substring(0, 7) : '';
-                    let crossMonthTag = '';
-                    if (inMonth && outMonth && inMonth !== outMonth && g.assignedMonth) {
-                        crossMonthTag = `<div class="text-[9px] text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-200 mt-0.5 font-medium" title="Reserva cruzada. Asignada contablemente a este mes.">
-                            <i class="fa-solid fa-calendar-check mr-0.5"></i>Mes: ${getFormattedMonthLabel(g.assignedMonth)}
-                        </div>`;
-                    }
-
-                    // Calculated Net Approx
-                    const netApprox = total - (parseFloat(g.bookingCommission) || 0) - cleaningVal;
-
-                    tr.innerHTML = `
-                        <td class="py-2 px-2 font-medium max-w-[150px]">
-                            <div class="text-slate-900 font-semibold text-xs leading-tight break-words">${escapeHTML(g.clientName)}</div>
-                            <div class="text-[10px] text-slate-400 font-mono">C.C: ${escapeHTML(g.clientId)}</div>
-                        </td>
-                        <td class="py-2 px-1.5 whitespace-nowrap">
-                            ${paymentBadge}
-                        </td>
-                        <td class="py-2 px-1.5 whitespace-nowrap">
-                            <span class="bg-slate-100 text-slate-800 font-medium px-1.5 py-0.5 rounded-md text-[11px] border border-slate-200">
-                                ${escapeHTML(g.apartment)}
-                            </span>
-                        </td>
-                        <td class="py-2 px-1.5 whitespace-nowrap text-xs">
-                            <div class="text-emerald-700 font-medium text-[10px]"><i class="fa-solid fa-arrow-right-to-bracket mr-1"></i>${g.checkIn}</div>
-                            <div class="text-rose-600 font-medium text-[10px]"><i class="fa-solid fa-arrow-right-from-bracket mr-1"></i>${g.checkOut}</div>
-                            ${crossMonthTag}
-                        </td>
-                        <td class="py-2 px-1.5 text-center font-bold text-slate-800 whitespace-nowrap">
-                            <span class="inline-block px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px]">
-                                ${g.nights} ${g.nights === 1 ? 'Noche' : 'Noches'}
-                            </span>
-                        </td>
-                        <td class="py-2 px-1.5 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${badgeClass}">
-                                <i class="${iconClass} text-[9px]"></i> ${g.channel}
-                            </span>
-                        </td>
-                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
-                            <div class="font-bold text-slate-900 text-[11px]">Tot: ${formatCOP(total)}</div>
-                            <div class="text-emerald-600 text-[10px]">Pag: ${formatCOP(paid)}</div>
-                            ${pending > 0 ? `<div class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded border border-rose-200 mt-0.5 inline-block text-[10px]">Debe: ${formatCOP(pending)}</div>` : `<div class="text-slate-400 text-[9px]">Deuda: $0</div>`}
-                        </td>
-                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
-                            ${g.bookingCommission > 0 ? `<span class="text-rose-600 font-medium text-[11px]">-${formatCOP(g.bookingCommission)}</span>` : `<span class="text-slate-300 text-[11px]">$0</span>`}
-                        </td>
-                        <td class="py-2 px-1.5 text-right whitespace-nowrap">
-                            ${cleaningCell}
-                        </td>
-                        <td class="py-2 px-1.5 text-right font-bold text-brand-700 whitespace-nowrap text-[11px]">
-                            ${formatCOP(netApprox)}
-                        </td>
-                        <td class="py-2 px-1.5 text-center whitespace-nowrap">
-                            <div class="flex items-center justify-center gap-0.5">
-                                <button onclick="editGuest('${g.id}')" class="p-1 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded transition-all" title="Editar / Actualizar Pago">
-                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
-                                </button>
-                                <button onclick="confirmDelete('${g.id}')" class="p-1 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition-all" title="Eliminar">
-                                    <i class="fa-solid fa-trash-can text-xs"></i>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    tableBody.appendChild(tr);
-                });
-            }
-
-            updateKPIs(dataToRender);
-            updateApartmentDropdownOptions();
-            updateMonthYearDropdownOptions();
-        }
-
-        function updateKPIs(dataset = guests) {
-            let totalNights = 0;
-            let totalGross = 0;
-            let totalPending = 0;
-            let pendingCount = 0;
-            let totalCommission = 0;
-            let totalCleaning = 0;
-
-            dataset.forEach(g => {
-                const total = parseFloat(g.totalPrice) || 0;
-                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
-                const pending = Math.max(0, total - paid);
-
-                totalNights += (parseInt(g.nights) || 0);
-                totalGross += total;
-                totalPending += pending;
-                if (pending > 0) pendingCount++;
-
-                totalCommission += (parseFloat(g.bookingCommission) || 0);
-                totalCleaning += (parseFloat(g.cleaningFee) || 0);
-            });
-
-            const totalNet = totalGross - totalCommission - totalCleaning;
-
-            document.getElementById('kpi-nights').innerText = totalNights;
-            document.getElementById('kpi-reservations').innerText = `${dataset.length} ${dataset.length === 1 ? 'estancia' : 'estancias'}`;
-            document.getElementById('kpi-gross').innerText = formatCOP(totalGross);
-            document.getElementById('kpi-pending').innerText = formatCOP(totalPending);
-            document.getElementById('kpi-pending-count').innerText = `${pendingCount} ${pendingCount === 1 ? 'cliente debe' : 'clientes deben'}`;
-            document.getElementById('kpi-commission').innerText = formatCOP(totalCommission);
-            document.getElementById('kpi-cleaning').innerText = formatCOP(totalCleaning);
-            document.getElementById('kpi-net').innerText = formatCOP(totalNet);
-        }
-
-        function updateApartmentDropdownOptions() {
-            const select = document.getElementById('filter-apartment');
-            const currentValue = select.value;
-            
-            const apartments = Array.from(new Set(guests.map(g => g.apartment.trim()))).sort();
-
-            select.innerHTML = '<option value="ALL">Todos los apartaestudios</option>';
-            apartments.forEach(apt => {
-                const opt = document.createElement('option');
-                opt.value = apt;
-                opt.innerText = apt;
-                select.appendChild(opt);
-            });
-
-            select.value = currentValue;
-        }
-
-        function updateMonthYearDropdownOptions() {
-            const select = document.getElementById('filter-month');
-            const currentValue = select.value;
-
-            const periodsSet = new Set();
-            const currentYear = new Date().getFullYear();
-
-            for (let m = 1; m <= 12; m++) {
-                const mStr = m < 10 ? '0' + m : '' + m;
-                periodsSet.add(`${currentYear}-${mStr}`);
-            }
-
-            guests.forEach(g => {
-                const assigned = getGuestAssignedMonth(g);
-                if (assigned) periodsSet.add(assigned);
-            });
-
-            const sortedPeriods = Array.from(periodsSet).sort().reverse();
-
-            select.innerHTML = '<option value="ALL">Todos los meses y años</option>';
-            sortedPeriods.forEach(period => {
-                const [year, month] = period.split('-');
-                const monthIndex = parseInt(month, 10) - 1;
-                if (monthIndex >= 0 && monthIndex < 12) {
-                    const opt = document.createElement('option');
-                    opt.value = period;
-                    opt.innerText = `${monthNames[monthIndex]} ${year}`;
-                    select.appendChild(opt);
-                }
-            });
-
-            if (Array.from(select.options).some(o => o.value === currentValue)) {
-                select.value = currentValue;
-            } else {
-                select.value = 'ALL';
-            }
-        }
-
-        function openModal(editId = null) {
-            const form = document.getElementById('form-guest');
-            form.reset();
-            document.getElementById('guest-id').value = '';
-            document.getElementById('modal-title').innerText = 'Registrar Nuevo Huésped';
-            document.getElementById('cross-month-container').classList.add('hidden');
-
-            const badge = document.getElementById('recurrent-guest-badge');
-            if (badge) badge.classList.add('hidden');
-
-            updateClientDatalists();
-
-            const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('check-in-date').value = todayStr;
-            document.getElementById('cleaning-payment-date').value = '';
-
-            toggleCommissionField();
-
-            if (editId) {
-                const item = guests.find(g => g.id === editId);
-                if (item) {
-                    const total = parseFloat(item.totalPrice) || 0;
-                    const paid = item.paidAmount !== undefined ? parseFloat(item.paidAmount) : (item.paymentStatus === 'Pagado' ? total : 0);
-
-                    document.getElementById('guest-id').value = item.id;
-                    document.getElementById('client-name').value = item.clientName;
-                    document.getElementById('client-id').value = item.clientId;
-                    document.getElementById('apartment-number').value = item.apartment;
-                    document.getElementById('check-in-date').value = item.checkIn;
-                    document.getElementById('check-out-date').value = item.checkOut;
-                    document.getElementById('channel-type').value = item.channel;
-                    document.getElementById('total-price').value = total;
-                    document.getElementById('paid-amount').value = paid;
-                    document.getElementById('booking-commission').value = item.bookingCommission;
-                    document.getElementById('cleaning-fee').value = item.cleaningFee || '';
-                    document.getElementById('cleaning-payment-date').value = item.cleaningDate || '';
-
-                    toggleCommissionField();
-                    calculateNights();
-
-                    if (item.assignedMonth) {
-                        const assignedSelect = document.getElementById('assigned-month-select');
-                        if (assignedSelect) assignedSelect.value = item.assignedMonth;
-                    }
-
-                    document.getElementById('modal-title').innerText = 'Editar Registro de Huésped';
-                }
-            } else {
-                calculateNights();
-            }
-
-            calculatePendingBalance();
-            document.getElementById('modal-guest').classList.remove('hidden');
-        }
-
-        function updateClientDatalists() {
-            const idsList = document.getElementById('existing-ids-list');
-            const namesList = document.getElementById('existing-names-list');
-            if (!idsList || !namesList) return;
-
-            idsList.innerHTML = '';
-            namesList.innerHTML = '';
-
-            const uniqueClients = new Map();
-            guests.forEach(g => {
-                if (g.clientId && g.clientName && !uniqueClients.has(g.clientId.trim().toLowerCase())) {
-                    uniqueClients.set(g.clientId.trim().toLowerCase(), {
-                        id: g.clientId.trim(),
-                        name: g.clientName.trim()
-                    });
-                }
-            });
-
-            uniqueClients.forEach(client => {
-                const optId = document.createElement('option');
-                optId.value = client.id;
-                optId.label = client.name;
-                idsList.appendChild(optId);
-
-                const optName = document.createElement('option');
-                optName.value = client.name;
-                optName.label = `C.C: ${client.id}`;
-                namesList.appendChild(optName);
-            });
-        }
-
-        function autofillClientById() {
-            const inputId = document.getElementById('client-id').value.trim().toLowerCase();
-            const badge = document.getElementById('recurrent-guest-badge');
-            
-            if (!inputId) {
-                if (badge) badge.classList.add('hidden');
-                return;
-            }
-
-            const existing = guests.find(g => g.clientId && g.clientId.trim().toLowerCase() === inputId);
-            if (existing) {
-                document.getElementById('client-name').value = existing.clientName;
-                if (badge) badge.classList.remove('hidden');
-            } else {
-                if (badge) badge.classList.add('hidden');
-            }
-        }
-
-        function autofillClientByName() {
-            const inputName = document.getElementById('client-name').value.trim().toLowerCase();
-            const badge = document.getElementById('recurrent-guest-badge');
-
-            if (!inputName) {
-                if (badge) badge.classList.add('hidden');
-                return;
-            }
-
-            const existing = guests.find(g => g.clientName && g.clientName.trim().toLowerCase() === inputName);
-            if (existing) {
-                document.getElementById('client-id').value = existing.clientId;
-                if (badge) badge.classList.remove('hidden');
-            } else {
-                if (badge) badge.classList.add('hidden');
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('modal-guest').classList.add('hidden');
-        }
-
-        function handleFormSubmit(e) {
-            e.preventDefault();
-
-            const inDate = document.getElementById('check-in-date').value;
-            const outDate = document.getElementById('check-out-date').value;
-            const computedNights = calculateNightsBetween(inDate, outDate);
-
-            if (computedNights <= 0) {
-                showToast("La fecha de salida debe ser posterior a la de ingreso.", "error");
-                return;
-            }
-
-            const editId = document.getElementById('guest-id').value;
-            const cleanVal = document.getElementById('cleaning-fee').value;
-            const total = parseFloat(document.getElementById('total-price').value) || 0;
-            const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
-
-            const inMonth = inDate.substring(0, 7);
-            const outMonth = outDate.substring(0, 7);
-            let assignedMonthValue = inMonth;
-
-            if (inMonth !== outMonth) {
-                assignedMonthValue = document.getElementById('assigned-month-select').value || inMonth;
-            }
-
-            const newGuest = {
-                id: editId ? editId : 'g-' + Date.now(),
-                clientName: document.getElementById('client-name').value.trim(),
-                clientId: document.getElementById('client-id').value.trim(),
-                apartment: document.getElementById('apartment-number').value.trim(),
-                checkIn: inDate,
-                checkOut: outDate,
-                assignedMonth: assignedMonthValue,
-                nights: computedNights,
-                channel: document.getElementById('channel-type').value,
-                totalPrice: total,
-                paidAmount: paid,
-                paymentStatus: paid >= total ? 'Pagado' : (paid > 0 ? 'Parcial' : 'Pendiente'),
-                bookingCommission: parseFloat(document.getElementById('booking-commission').value) || 0,
-                cleaningFee: cleanVal !== '' ? parseFloat(cleanVal) : 0,
-                cleaningDate: document.getElementById('cleaning-payment-date').value || ''
-            };
-
-            if (editId) {
-                const index = guests.findIndex(g => g.id === editId);
-                if (index !== -1) guests[index] = newGuest;
-                showToast("Registro actualizado correctamente.");
-            } else {
-                guests.unshift(newGuest);
-                showToast("Huésped registrado exitosamente.");
-            }
-
-            if (isCloudActive && firebaseDb) {
-                firebaseDb.ref('guests/' + newGuest.id).set(newGuest);
-            }
-            saveToLocalStorage();
-
-            applyFilters();
-            closeModal();
-        }
-
-        function editGuest(id) {
-            openModal(id);
-        }
-
-        function applyFilters() {
-            const query = document.getElementById('filter-search').value.toLowerCase().trim();
-            const channelFilter = document.getElementById('filter-channel').value;
-            const apartmentFilter = document.getElementById('filter-apartment').value;
-            const monthFilter = document.getElementById('filter-month').value;
-            const paymentFilter = document.getElementById('filter-payment').value;
-            const cleaningFilter = document.getElementById('filter-cleaning').value;
-
-            const filtered = guests.filter(g => {
-                const matchesQuery = g.clientName.toLowerCase().includes(query) || 
-                                     g.clientId.toLowerCase().includes(query) ||
-                                     g.apartment.toLowerCase().includes(query);
-                
-                const matchesChannel = (channelFilter === 'ALL') || (g.channel === channelFilter);
-                const matchesApartment = (apartmentFilter === 'ALL') || (g.apartment === apartmentFilter);
-
-                let matchesMonth = true;
-                if (monthFilter !== 'ALL') {
-                    const assigned = getGuestAssignedMonth(g);
-                    matchesMonth = (assigned === monthFilter);
-                }
-
-                const total = parseFloat(g.totalPrice) || 0;
-                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
-                const pending = Math.max(0, total - paid);
-
-                let matchesPayment = true;
-                if (paymentFilter === 'PENDING') {
-                    matchesPayment = (pending > 0);
-                } else if (paymentFilter === 'PAID') {
-                    matchesPayment = (pending <= 0);
-                }
-
-                const cleanVal = parseFloat(g.cleaningFee) || 0;
-                const isCleaningPaid = cleanVal > 0 && g.cleaningDate && g.cleaningDate.trim() !== '';
-
-                let matchesCleaning = true;
-                if (cleaningFilter === 'PENDING') {
-                    matchesCleaning = !isCleaningPaid;
-                } else if (cleaningFilter === 'PAID') {
-                    matchesCleaning = isCleaningPaid;
-                }
-
-                return matchesQuery && matchesChannel && matchesApartment && matchesMonth && matchesPayment && matchesCleaning;
-            });
-
-            renderUI(filtered);
-        }
-
-        function resetFilters() {
-            document.getElementById('filter-search').value = '';
-            document.getElementById('filter-channel').value = 'ALL';
-            document.getElementById('filter-apartment').value = 'ALL';
-            document.getElementById('filter-month').value = 'ALL';
-            document.getElementById('filter-payment').value = 'ALL';
-            document.getElementById('filter-cleaning').value = 'ALL';
-            applyFilters();
-        }
-
-        function exportToCSV() {
-            if (guests.length === 0) {
-                showToast("No hay registros para exportar.", "error");
-                return;
-            }
-
-            let csvContent = "\uFEFF";
-            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Mes Asignado;Noches Totales;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
-
-            guests.forEach(g => {
-                const total = parseFloat(g.totalPrice) || 0;
-                const paid = parseFloat(g.paidAmount !== undefined ? g.paidAmount : (g.paymentStatus === 'Pagado' ? total : 0));
-                const pending = Math.max(0, total - paid);
-                const cleanVal = parseFloat(g.cleaningFee) || 0;
-                const netApprox = total - (g.bookingCommission || 0) - cleanVal;
-
-                let statusStr = "Pagado";
-                if (pending > 0 && paid > 0) statusStr = "Pago Parcial";
-                else if (pending > 0 && paid === 0) statusStr = "Pendiente";
-
-                const assigned = getGuestAssignedMonth(g);
-
-                const row = [
-                    `"${g.clientName.replace(/"/g, '""')}"`,
-                    `"${g.clientId}"`,
-                    `"${g.apartment}"`,
-                    g.checkIn,
-                    g.checkOut,
-                    `"${getFormattedMonthLabel(assigned)}"`,
-                    g.nights,
-                    `"${g.channel}"`,
-                    total,
-                    paid,
-                    pending,
-                    `"${statusStr}"`,
-                    g.bookingCommission,
-                    cleanVal,
-                    g.cleaningDate || '',
-                    netApprox
-                ];
-                csvContent += row.join(";") + "\n";
-            });
-
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Control_Huespedes_Apartaestudios_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            showToast("Archivo Excel/CSV generado con éxito.");
-        }
-
-        function confirmDelete(id) {
-            deleteTargetId = id;
-            document.getElementById('modal-confirm').classList.remove('hidden');
-        }
-
-        function closeConfirmModal() {
-            deleteTargetId = null;
-            document.getElementById('modal-confirm').classList.add('hidden');
-        }
-
-        document.getElementById('btn-confirm-delete').addEventListener('click', () => {
-            if (deleteTargetId) {
-                if (isCloudActive && firebaseDb) {
-                    firebaseDb.ref('guests/' + deleteTargetId).remove();
-                }
-                guests = guests.filter(g => g.id !== deleteTargetId);
-                saveToLocalStorage();
-                applyFilters();
-                showToast("Registro eliminado con éxito.");
-            }
-            closeConfirmModal();
-        });
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toast-icon');
-            const msg = document.getElementById('toast-message');
-
-            msg.innerText = message;
-            if (type === 'error') {
-                icon.className = "fa-solid fa-circle-xmark text-rose-400";
-            } else {
-                icon.className = "fa-solid fa-circle-check text-emerald-400";
-            }
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3000);
-        }
-
-        function saveToLocalStorage(showToastAlert = false) {
-            localStorage.setItem('apartaestudios_guests_v1', JSON.stringify(guests));
-        }
-
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem('apartaestudios_guests_v1');
-            if (saved) {
-                try {
-                    guests = JSON.parse(saved);
-                } catch(e) {
-                    guests = [];
-                }
-            } else {
-                guests = [];
-            }
-        }
-
-        function escapeHTML(str) {
-            return String(str).replace(/[&<>"']/g, function(m) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#039;'
-                }[m];
-            });
-        }
-
-        window.onload = function() {
-            loadFromLocalStorage();
-            renderUI();
-            initFirebase();
-        };
-    </script>
+        return true;
+      });
+
+      filtered.forEach(g => {
+        const deuda = g.total - g.paid;
+        totIngreso += g.total;
+        totPagado += g.paid;
+        totDeuda += deuda;
+        totNoches += g.nights;
+
+        const row = document.createElement('tr');
+        row.className = "hover:bg-slate-50 border-b border-slate-100";
+
+        const aseoDiferente = g.cleaningMonth && g.cleaningMonth !== g.assignedMonth;
+
+        row.innerHTML = `
+          <td class="py-2 px-2 font-medium">
+            <div>${g.name}</div>
+            <div class="text-[10px] text-slate-400">C.C: ${g.doc}</div>
+            ${g.isExtension ? '<span class="inline-block bg-amber-100 text-amber-800 text-[9px] px-1 rounded font-bold">Extensión</span>' : ''}
+          </td>
+          <td class="py-2 px-1.5 text-center font-bold text-slate-600">${g.apto}</td>
+          <td class="py-2 px-1.5 text-[11px]">
+            <div><i class="fa-solid fa-arrow-right-to-bracket text-emerald-500"></i> ${g.checkIn}</div>
+            <div><i class="fa-solid fa-arrow-right-from-bracket text-rose-500"></i> ${g.checkOut}</div>
+          </td>
+          <td class="py-2 px-1.5 text-center font-semibold text-indigo-600">${g.nights} N.</td>
+          <td class="py-2 px-1.5">
+            <span class="bg-slate-100 text-slate-700 text-[10px] px-1.5 py-0.5 rounded font-medium border border-slate-200">${g.channel}</span>
+          </td>
+          <td class="py-2 px-1.5 text-[11px]">
+            <div><strong>Total:</strong> $${g.total.toLocaleString('es-CO')}</div>
+            <div class="text-emerald-600"><strong>Pagado:</strong> $${g.paid.toLocaleString('es-CO')}</div>
+            ${deuda > 0 ? `<div class="text-rose-600 font-bold">Debe: $${deuda.toLocaleString('es-CO')}</div>` : '<div class="text-slate-400 text-[10px]">Al día</div>'}
+          </td>
+          <td class="py-2 px-1.5 text-center text-[10px]">
+            <div class="font-bold">$${g.cleaningFee.toLocaleString('es-CO')}</div>
+            <div class="text-slate-400">${g.cleaningStatus}</div>
+            ${aseoDiferente ? `<span class="inline-block bg-purple-100 text-purple-700 text-[9px] px-1 rounded">Pago: ${g.cleaningMonth}</span>` : ''}
+          </td>
+          <td class="py-2 px-1.5 text-center">
+            <button onclick="editGuest('${g.id}')" class="text-indigo-600 hover:text-indigo-800 px-1"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="deleteGuest('${g.id}')" class="text-rose-600 hover:text-rose-800 px-1"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+
+        tbody.appendChild(row);
+      });
+
+      document.getElementById('stat-total').textContent = `$${totIngreso.toLocaleString('es-CO')}`;
+      document.getElementById('stat-paid').textContent = `$${totPagado.toLocaleString('es-CO')}`;
+      document.getElementById('stat-pending').textContent = `$${totDeuda.toLocaleString('es-CO')}`;
+      document.getElementById('stat-cleaning').textContent = `$${totAseosMes.toLocaleString('es-CO')}`;
+      document.getElementById('stat-nights').textContent = `${totNoches} Noches`;
+    }
+
+    function editGuest(id) {
+      const g = guests.find(item => item.id === id);
+      if (g) openModal(g);
+    }
+
+    function deleteGuest(id) {
+      if (confirm('¿Deseas eliminar este registro?')) {
+        guests = guests.filter(g => g.id !== id);
+        localStorage.setItem('guests_data', JSON.stringify(guests));
+        renderUI();
+      }
+    }
+
+    function exportToCSV() {
+      if (guests.length === 0) return alert('No hay datos para exportar.');
+      let csv = 'Cedula;Nombre;Apto;Canal;Ingreso;Salida;Noches;MesContable;Total;Pagado;Saldo;Aseo;EstadoAseo;MesPagoAseo;Extension\n';
+      guests.forEach(g => {
+        const saldo = g.total - g.paid;
+        csv += `${g.doc};${g.name};${g.apto};${g.channel};${g.checkIn};${g.checkOut};${g.nights};${g.assignedMonth};${g.total};${g.paid};${saldo};${g.cleaningFee};${g.cleaningStatus};${g.cleaningMonth};${g.isExtension ? 'SI' : 'NO'}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Reporte_Huespedes_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    }
+  </script>
 </body>
 </html>
