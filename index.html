@@ -400,16 +400,21 @@
                     </div>
 
                     <!-- Abonos y Control de Deuda -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-white rounded-lg border border-slate-200 mb-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-white rounded-lg border border-slate-200 mb-2">
                         <div>
                             <label class="block text-xs font-bold text-slate-800 mb-1">Valor Total Estadía Completa ($) *</label>
                             <input type="number" id="total-price" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 300000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <span class="text-[10px] text-slate-400">Suma total de las noches correspondientes a este registro</span>
+                            <span class="text-[10px] text-slate-400">Suma total de las noches</span>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-800 mb-1">Monto Pagado / Abonado ($) *</label>
                             <input type="number" id="paid-amount" min="0" step="any" required oninput="calculatePendingBalance()" placeholder="Ej: 100000" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-emerald-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                            <span class="text-[10px] text-slate-400">Lo que el cliente te ha entregado</span>
+                            <span class="text-[10px] text-slate-400">Lo que el cliente te entregó</span>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">Fecha de Pago del Cliente *</label>
+                            <input type="date" id="client-payment-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <span class="text-[10px] text-slate-400">Día en que ingresó el dinero</span>
                         </div>
                     </div>
 
@@ -934,6 +939,7 @@
                         <td class="py-2 px-1.5 text-right whitespace-nowrap">
                             <div class="font-bold text-slate-900 text-[11px]">Tot: ${formatCOP(total)}</div>
                             <div class="text-emerald-600 text-[10px]">Pag: ${formatCOP(paid)}</div>
+                            ${g.paymentDate ? `<div class="text-[9px] text-slate-400"><i class="fa-solid fa-calendar-day mr-0.5"></i>F. Pago: ${g.paymentDate}</div>` : ''}
                             ${pending > 0 ? `<div class="text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded border border-rose-200 mt-0.5 inline-block text-[10px]">Debe: ${formatCOP(pending)}</div>` : `<div class="text-slate-400 text-[9px]">Deuda: $0</div>`}
                         </td>
                         <td class="py-2 px-1.5 text-right whitespace-nowrap">
@@ -1114,6 +1120,7 @@
 
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('check-in-date').value = todayStr;
+            document.getElementById('client-payment-date').value = todayStr;
             document.getElementById('cleaning-payment-date').value = '';
 
             toggleCommissionField();
@@ -1131,6 +1138,7 @@
                     document.getElementById('apartment-number').value = item.apartment;
                     document.getElementById('check-in-date').value = item.checkIn;
                     document.getElementById('check-out-date').value = item.checkOut;
+                    document.getElementById('client-payment-date').value = item.paymentDate || item.checkIn || todayStr;
                     document.getElementById('channel-type').value = item.channel;
                     document.getElementById('total-price').value = total;
                     document.getElementById('paid-amount').value = paid;
@@ -1262,6 +1270,7 @@
                 apartment: document.getElementById('apartment-number').value.trim(),
                 checkIn: inDate,
                 checkOut: outDate,
+                paymentDate: document.getElementById('client-payment-date').value || inDate,
                 assignedMonth: assignedMonthValue,
                 nights: computedNights,
                 channel: document.getElementById('channel-type').value,
@@ -1362,7 +1371,7 @@
             }
 
             let csvContent = "\uFEFF";
-            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Mes Asignado;Noches Totales;Es Ampliación;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
+            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Fecha Pago Cliente;Mes Asignado;Noches Totales;Es Ampliación;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
 
             guests.forEach(g => {
                 const total = parseFloat(g.totalPrice) || 0;
@@ -1383,6 +1392,7 @@
                     `"${g.apartment}"`,
                     g.checkIn,
                     g.checkOut,
+                    g.paymentDate || g.checkIn,
                     `"${getFormattedMonthLabel(assigned)}"`,
                     g.nights,
                     g.isExtension ? "Sí" : "No",
