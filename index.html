@@ -106,7 +106,7 @@
         <div id="month-accounting-info" class="hidden mb-4 bg-indigo-50 border border-indigo-200 text-indigo-900 p-3 rounded-xl text-xs flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-calculator text-indigo-600 text-sm"></i>
-                <span><strong>Cierre de Mes Inteligente:</strong> Los gastos de aseo se imputan al mes según la <strong>Fecha de Pago del Aseo</strong> (Flujo de Caja Real).</span>
+                <span><strong>Cierre de Mes Inteligente:</strong> Viendo registros imputados contablemente a este mes.</span>
             </div>
             <span id="cleaning-cross-month-summary" class="font-semibold text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-lg text-[11px]">
                 Aseos pagados este mes: $0
@@ -213,7 +213,7 @@
                 <div>
                     <select id="filter-payment" onchange="applyFilters()" class="w-full py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all text-slate-700 font-medium">
                         <option value="ALL">Todos los estados de pago</option>
-                        <option value="PENDING" class="text-amber-600 font-bold">⚠️️ Con Saldo Pendiente / Deben</option>
+                        <option value="PENDING" class="text-amber-600 font-bold">⚠ Con Saldo Pendiente / Deben</option>
                         <option value="PAID" class="text-emerald-600 font-bold">✅ Totalmente Pagados</option>
                     </select>
                 </div>
@@ -356,19 +356,19 @@
                         <span id="calculated-nights-badge" class="font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200">0 Noches</span>
                     </div>
 
-                    <!-- Pregunta Especial de Asignación de Mes si la reserva cruza de un mes a otro -->
-                    <div id="cross-month-container" class="hidden bg-amber-50 border border-amber-300 p-3.5 rounded-xl space-y-2">
-                        <div class="flex items-start gap-2.5 text-amber-900 text-xs font-semibold">
-                            <i class="fa-solid fa-calendar-week text-amber-600 text-base mt-0.5"></i>
+                    <!-- Asignación Flexible de Mes Contable -->
+                    <div id="accounting-month-container" class="bg-indigo-50/70 border border-indigo-200 p-3.5 rounded-xl space-y-2">
+                        <div class="flex items-start gap-2.5 text-indigo-900 text-xs font-semibold">
+                            <i class="fa-solid fa-calendar-check text-indigo-600 text-base mt-0.5"></i>
                             <div>
-                                <div>Estancia entre dos meses detectada</div>
-                                <p class="text-[11px] font-normal text-amber-700 leading-tight mt-0.5">
-                                    El cliente ingresa en un mes y sale en otro. ¿En qué mes deseas asignar este registro para tus reportes e ingresos?
+                                <div>Mes de Imputación Contable (Reportes de Ingresos)</div>
+                                <p class="text-[11px] font-normal text-indigo-700 leading-tight mt-0.5">
+                                    Selecciona el mes en el que deseas que sumen los ingresos y las noches en tus reportes mensuales.
                                 </p>
                             </div>
                         </div>
                         <div class="pt-1">
-                            <select id="assigned-month-select" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <select id="assigned-month-select" class="w-full px-3 py-2 bg-white border border-indigo-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                                 <!-- Dynamic Options Populated via JS -->
                             </select>
                         </div>
@@ -413,7 +413,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-800 mb-1">Fecha de Pago del Cliente *</label>
-                            <input type="date" id="client-payment-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <input type="date" id="client-payment-date" required onchange="updateAssignedMonthOptions()" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-500 focus:outline-none">
                             <span class="text-[10px] text-slate-400">Día en que ingresó el dinero</span>
                         </div>
                     </div>
@@ -696,12 +696,72 @@
             return yearMonthStr;
         }
 
+        function updateAssignedMonthOptions(preserveCurrent = true) {
+            const inDate = document.getElementById('check-in-date').value;
+            const outDate = document.getElementById('check-out-date').value;
+            const payDate = document.getElementById('client-payment-date').value;
+            const assignedSelect = document.getElementById('assigned-month-select');
+
+            if (!assignedSelect) return;
+
+            const selectedValBefore = preserveCurrent ? assignedSelect.value : null;
+
+            const optionMap = new Map();
+
+            // Default suggestion 1: Payment Month (Cash Flow - E.g., October if paid in Oct)
+            if (payDate) {
+                const payMonth = payDate.substring(0, 7);
+                optionMap.set(payMonth, `Asignar a ${getFormattedMonthLabel(payMonth)} (Mes de Pago del Cliente - Flujo Real)`);
+            }
+
+            // Default suggestion 2: Check-in Month (Stay - E.g., September)
+            if (inDate) {
+                const inMonth = inDate.substring(0, 7);
+                if (!optionMap.has(inMonth)) {
+                    optionMap.set(inMonth, `Asignar a ${getFormattedMonthLabel(inMonth)} (Mes de Ingreso / Estadía)`);
+                }
+            }
+
+            // Default suggestion 3: Check-out Month
+            if (outDate) {
+                const outMonth = outDate.substring(0, 7);
+                if (!optionMap.has(outMonth)) {
+                    optionMap.set(outMonth, `Asignar a ${getFormattedMonthLabel(outMonth)} (Mes de Salida)`);
+                }
+            }
+
+            // Also populate neighboring months for full flexibility
+            const nowYear = new Date().getFullYear();
+            for (let m = 1; m <= 12; m++) {
+                const mStr = m < 10 ? '0' + m : '' + m;
+                const ym = `${nowYear}-${mStr}`;
+                if (!optionMap.has(ym)) {
+                    optionMap.set(ym, `Asignar a ${getFormattedMonthLabel(ym)}`);
+                }
+            }
+
+            assignedSelect.innerHTML = '';
+            optionMap.forEach((label, ymKey) => {
+                const opt = document.createElement('option');
+                opt.value = ymKey;
+                opt.innerText = label;
+                assignedSelect.appendChild(opt);
+            });
+
+            // Prioritize payDate month if available and new entry
+            if (selectedValBefore && Array.from(assignedSelect.options).some(o => o.value === selectedValBefore)) {
+                assignedSelect.value = selectedValBefore;
+            } else if (payDate) {
+                assignedSelect.value = payDate.substring(0, 7);
+            } else if (inDate) {
+                assignedSelect.value = inDate.substring(0, 7);
+            }
+        }
+
         function calculateNights() {
             const inDate = document.getElementById('check-in-date').value;
             const outDate = document.getElementById('check-out-date').value;
             const badge = document.getElementById('calculated-nights-badge');
-            const crossContainer = document.getElementById('cross-month-container');
-            const assignedSelect = document.getElementById('assigned-month-select');
             
             const nights = calculateNightsBetween(inDate, outDate);
             badge.innerText = `${nights} ${nights === 1 ? 'Noche' : 'Noches'}`;
@@ -709,44 +769,11 @@
             if (nights <= 0 && inDate && outDate) {
                 badge.className = "font-bold text-rose-600 text-sm bg-rose-50 px-2.5 py-1 rounded border border-rose-200";
                 badge.innerText = "Error: Fecha de salida inválida";
-                crossContainer.classList.add('hidden');
             } else {
                 badge.className = "font-bold text-brand-700 text-sm bg-white px-2.5 py-1 rounded border border-brand-200";
-                
-                // --- Cross Month Detection Logic ---
-                if (inDate && outDate) {
-                    const inMonth = inDate.substring(0, 7);
-                    const outMonth = outDate.substring(0, 7);
-
-                    if (inMonth !== outMonth) {
-                        const previousSelectedVal = assignedSelect.value;
-                        assignedSelect.innerHTML = '';
-
-                        const optIn = document.createElement('option');
-                        optIn.value = inMonth;
-                        optIn.innerText = `Asignar a ${getFormattedMonthLabel(inMonth)} (Mes de Ingreso)`;
-
-                        const optOut = document.createElement('option');
-                        optOut.value = outMonth;
-                        optOut.innerText = `Asignar a ${getFormattedMonthLabel(outMonth)} (Mes de Salida)`;
-
-                        assignedSelect.appendChild(optIn);
-                        assignedSelect.appendChild(optOut);
-
-                        if (previousSelectedVal === outMonth) {
-                            assignedSelect.value = outMonth;
-                        } else {
-                            assignedSelect.value = inMonth;
-                        }
-
-                        crossContainer.classList.remove('hidden');
-                    } else {
-                        crossContainer.classList.add('hidden');
-                    }
-                } else {
-                    crossContainer.classList.add('hidden');
-                }
             }
+
+            updateAssignedMonthOptions();
         }
 
         function calculatePendingBalance() {
@@ -822,6 +849,7 @@
 
         function getGuestAssignedMonth(g) {
             if (g.assignedMonth) return g.assignedMonth;
+            if (g.paymentDate) return g.paymentDate.substring(0, 7);
             if (g.checkIn) return g.checkIn.substring(0, 7);
             return '';
         }
@@ -890,18 +918,18 @@
                         cleaningCell = `<span class="inline-block bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200 font-medium">Por liquidar</span>`;
                     }
 
-                    // Extension Tag or Assigned month indicator
+                    // Assigned Month Indicator Tag
                     const inMonth = g.checkIn ? g.checkIn.substring(0, 7) : '';
-                    const outMonth = g.checkOut ? g.checkOut.substring(0, 7) : '';
+                    const assigned = getGuestAssignedMonth(g);
                     let crossMonthTag = '';
 
                     if (g.isExtension) {
                         crossMonthTag = `<div class="text-[9px] text-indigo-700 bg-indigo-50 px-1 py-0.5 rounded border border-indigo-200 mt-0.5 font-semibold">
                             <i class="fa-solid fa-arrows-rotate mr-0.5"></i>Ampliación de estadía
                         </div>`;
-                    } else if (inMonth && outMonth && inMonth !== outMonth && g.assignedMonth) {
-                        crossMonthTag = `<div class="text-[9px] text-amber-700 bg-amber-50 px-1 py-0.5 rounded border border-amber-200 mt-0.5 font-medium" title="Reserva cruzada. Asignada contablemente a este mes.">
-                            <i class="fa-solid fa-calendar-check mr-0.5"></i>Mes: ${getFormattedMonthLabel(g.assignedMonth)}
+                    } else if (assigned && assigned !== inMonth) {
+                        crossMonthTag = `<div class="text-[9px] text-indigo-800 bg-indigo-100/80 px-1 py-0.5 rounded border border-indigo-200 mt-0.5 font-bold" title="Ingreso asignado contablemente a este mes">
+                            <i class="fa-solid fa-calendar-check mr-0.5"></i>Reporte: ${getFormattedMonthLabel(assigned)}
                         </div>`;
                     }
 
@@ -953,7 +981,7 @@
                         </td>
                         <td class="py-2 px-1.5 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-0.5">
-                                <button onclick="editGuest('${g.id}')" class="p-1 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded transition-all" title="Editar / Actualizar Pago">
+                                <button onclick="editGuest('${g.id}')" class="p-1 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded transition-all" title="Editar / Cambiar Mes de Asignación">
                                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                                 </button>
                                 <button onclick="confirmDelete('${g.id}')" class="p-1 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded transition-all" title="Eliminar">
@@ -1002,7 +1030,7 @@
                     totalCleaning += (parseFloat(g.cleaningFee) || 0);
                 });
             } else {
-                // --- MONTH SPECIFIC ACCOUNTING (REAL CASH-FLOW FOR CLEANING) ---
+                // --- MONTH SPECIFIC ACCOUNTING (ASSIGNED MONTH REVENUE & CLEANING CASH-FLOW) ---
                 if (accountingInfoBanner) accountingInfoBanner.classList.remove('hidden');
                 if (cleaningSubtitle) cleaningSubtitle.innerText = `Pagados en ${getFormattedMonthLabel(selectedMonth)}`;
 
@@ -1110,7 +1138,6 @@
             form.reset();
             document.getElementById('guest-id').value = '';
             document.getElementById('modal-title').innerText = 'Registrar Nuevo Huésped';
-            document.getElementById('cross-month-container').classList.add('hidden');
             document.getElementById('is-extension-flag').checked = false;
 
             const badge = document.getElementById('recurrent-guest-badge');
@@ -1120,6 +1147,7 @@
 
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('check-in-date').value = todayStr;
+            document.getElementById('check-out-date').value = todayStr;
             document.getElementById('client-payment-date').value = todayStr;
             document.getElementById('cleaning-payment-date').value = '';
 
@@ -1151,9 +1179,10 @@
                     toggleExtensionMode();
                     calculateNights();
 
-                    if (item.assignedMonth) {
-                        const assignedSelect = document.getElementById('assigned-month-select');
-                        if (assignedSelect) assignedSelect.value = item.assignedMonth;
+                    updateAssignedMonthOptions(false);
+                    const assignedSelect = document.getElementById('assigned-month-select');
+                    if (assignedSelect && item.assignedMonth) {
+                        assignedSelect.value = item.assignedMonth;
                     }
 
                     document.getElementById('modal-title').innerText = 'Editar Registro de Huésped';
@@ -1254,14 +1283,9 @@
             const cleanVal = isExtension ? 0 : document.getElementById('cleaning-fee').value;
             const total = parseFloat(document.getElementById('total-price').value) || 0;
             const paid = parseFloat(document.getElementById('paid-amount').value) || 0;
+            const payDate = document.getElementById('client-payment-date').value || inDate;
 
-            const inMonth = inDate.substring(0, 7);
-            const outMonth = outDate.substring(0, 7);
-            let assignedMonthValue = inMonth;
-
-            if (inMonth !== outMonth) {
-                assignedMonthValue = document.getElementById('assigned-month-select').value || inMonth;
-            }
+            const assignedMonthValue = document.getElementById('assigned-month-select').value || payDate.substring(0, 7) || inDate.substring(0, 7);
 
             const newGuest = {
                 id: editId ? editId : 'g-' + Date.now(),
@@ -1270,7 +1294,7 @@
                 apartment: document.getElementById('apartment-number').value.trim(),
                 checkIn: inDate,
                 checkOut: outDate,
-                paymentDate: document.getElementById('client-payment-date').value || inDate,
+                paymentDate: payDate,
                 assignedMonth: assignedMonthValue,
                 nights: computedNights,
                 channel: document.getElementById('channel-type').value,
@@ -1371,7 +1395,7 @@
             }
 
             let csvContent = "\uFEFF";
-            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Fecha Pago Cliente;Mes Asignado;Noches Totales;Es Ampliación;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
+            csvContent += "Nombre Cliente;Número Cédula;Apartaestudio;Fecha Ingreso;Fecha Salida;Fecha Pago Cliente;Mes Asignado Reporte;Noches Totales;Es Ampliación;Canal / Plataforma;Valor Total Cobrado;Monto Pagado;Saldo Pendiente;Estado Pago;Comisión Booking;Valor Aseo;Fecha Pago Aseo;Ingreso Neto Aprox\n";
 
             guests.forEach(g => {
                 const total = parseFloat(g.totalPrice) || 0;
